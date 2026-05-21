@@ -1,0 +1,13 @@
+@"
+{
+  "name": "student/ecommerce-security-platform",
+  "description": "E-commerce security login platform with MFA, OTP, Rule Engine and API testing.",
+  "type": "project",
+  "require": {},
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/"
+    }
+  }
+}
+"@ | Set-Content composer.json
