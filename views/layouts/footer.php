@@ -188,7 +188,7 @@ $activePage = $activePage ?? '';
 
     <!-- Col 1: Logo + Brand + Slogan -->
     <div class="site-footer__col">
-      <a href="/index.html" class="site-footer__brand" aria-label="Bite Me Donut — Home">
+      <a href="../../views/user/index.php" class="site-footer__brand" aria-label="Bite Me Donut — Home">
         <img
           src="../../public/assets/img/logo.png"
           alt="Bite Me Donut logo"
@@ -206,16 +206,16 @@ $activePage = $activePage ?? '';
     <!-- Col 2: Pages -->
     <div class="site-footer__col">
       <p class="site-footer__col-title">Pages</p>
-      <a href="/index.html"    class="site-footer__link">Home</a>
-      <a href="/products.html" class="site-footer__link">Products</a>
-      <a href="/policies.html" class="site-footer__link">Policies</a>
+      <a href="../../views/user/index.php"    class="site-footer__link">Home</a>
+      <a href="../../views/user/products.php" class="site-footer__link">Products</a>
+      <a href="../../views/user/policies.php" class="site-footer__link">Policies</a>
     </div>
 
     <!-- Col 3: Account -->
     <div class="site-footer__col">
       <p class="site-footer__col-title">Account</p>
-      <a href="/login.html"  class="site-footer__link">Sign In</a>
-      <a href="/orders.html" class="site-footer__link">My Orders</a>
+      <a href="../../views/user/login.php"  class="site-footer__link">Sign In</a>
+      <a href="../../views/user/orders.php" class="site-footer__link">My Orders</a>
       <a href="../../views/user/cart.php"   class="site-footer__link">My Cart</a>
     </div>
 

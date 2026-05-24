@@ -1,0 +1,403 @@
+/* ============================================================
+   POLICIES.CSS — Bite-Me-Donut Policies Page Styles
+   Extends root.css — do not import root.css here
+   ============================================================ */
+
+/* ---- Hero Banner ---- */
+.policies-hero {
+  background-color: var(--color-primary);
+  padding-block: var(--space-12) var(--space-10);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.policies-hero::before,
+.policies-hero::after {
+  content: '';
+  position: absolute;
+  border-radius: var(--radius-full);
+  background-color: rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+
+.policies-hero::before {
+  width: 320px;
+  height: 320px;
+  top: -80px;
+  left: -80px;
+}
+
+.policies-hero::after {
+  width: 200px;
+  height: 200px;
+  bottom: -60px;
+  right: -40px;
+}
+
+.policies-hero__eyebrow {
+  display: inline-block;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: var(--space-3);
+}
+
+.policies-hero__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-4xl);
+  color: var(--color-text-light);
+  margin-bottom: var(--space-4);
+}
+
+.policies-hero__subtitle {
+  font-size: var(--text-md);
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 700px;
+  margin-inline: auto;
+  line-height: var(--line-height-relaxed);
+}
+
+/* ---- Last updated bar ---- */
+.policies-updated-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background-color: var(--color-bg-alt);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-8);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.policies-updated-bar__icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.policies-updated-bar strong {
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+/* ---- 3-column layout: toc | main ---- */
+.policies-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: var(--space-10);
+  align-items: start;
+}
+
+/* ---- Quick Navigation (left sticky column) ---- */
+.policies-toc {
+  position: sticky;
+  top: calc(var(--navbar-height) + var(--space-6));
+  background-color: var(--color-bg-card);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.policies-toc__header {
+  background-color: var(--color-primary);
+  padding: var(--space-4) var(--space-5);
+}
+
+.policies-toc__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-md);
+  color: var(--color-text-light);
+}
+
+.policies-toc__list {
+  padding: var(--space-3) 0;
+}
+
+.policies-toc__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5);
+  transition: background-color var(--transition-fast);
+}
+
+.policies-toc__item:hover {
+  background-color: var(--color-primary-light);
+}
+
+.policies-toc__num {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-black);
+  color: var(--color-primary);
+  min-width: 20px;
+  flex-shrink: 0;
+}
+
+.policies-toc__link {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  line-height: var(--line-height-tight);
+}
+
+.policies-toc__item:hover .policies-toc__link {
+  color: var(--color-primary);
+}
+
+.policies-toc__divider {
+  height: 1px;
+  background-color: var(--color-border);
+  margin: var(--space-2) var(--space-5);
+}
+
+/* ---- Main content area ---- */
+.policies-main {
+  min-width: 0;
+}
+
+/* ---- Policy Section ---- */
+.policy-section {
+  margin-bottom: var(--space-12);
+  scroll-margin-top: 100px;
+}
+
+.policy-section__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.policy-section__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.policy-section__icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.policy-section__number {
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  color: var(--color-primary);
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.policy-section__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  color: var(--color-text);
+}
+
+.policy-section__body {
+  font-size: var(--text-base);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text);
+}
+
+.policy-section__body p {
+  margin-bottom: var(--space-4);
+}
+
+.policy-section__body p:last-child {
+  margin-bottom: 0;
+}
+
+.policy-section__body strong {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+/* ---- Policy Items (icon list) ---- */
+.policy-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-block: var(--space-5);
+}
+
+.policy-item {
+  display: flex;
+  gap: var(--space-4);
+  background-color: var(--color-bg-card);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.policy-item:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-card);
+}
+
+.policy-item__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-bg-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-primary);
+}
+
+.policy-item__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.policy-item__content {
+  flex: 1;
+}
+
+.policy-item__title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+}
+
+.policy-item__desc {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-relaxed);
+}
+
+/* ---- Highlight box ---- */
+.policy-highlight {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  background-color: var(--color-primary-light);
+  border-left: 4px solid var(--color-primary);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: var(--space-5) var(--space-6);
+  margin-block: var(--space-5);
+}
+
+.policy-highlight__svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-primary);
+}
+
+.policy-highlight__text {
+  font-size: var(--text-sm);
+  color: var(--color-primary-dark);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-relaxed);
+}
+
+/* ---- Simple bullet list ---- */
+.policy-list {
+  padding-left: var(--space-6);
+  margin-block: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.policy-list li {
+  list-style: disc;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-relaxed);
+}
+
+.policy-list li::marker {
+  color: var(--color-primary);
+}
+
+/* ---- Bottom CTA strip ---- */
+.policies-cta {
+  background-color: var(--color-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-10) var(--space-8);
+  text-align: center;
+  margin-top: var(--space-12);
+}
+
+.policies-cta__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  color: var(--color-text-light);
+  margin-bottom: var(--space-3);
+}
+
+.policies-cta__desc {
+  font-size: var(--text-md);
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: var(--space-6);
+}
+
+.policies-cta .btn--outline {
+  border-color: white;
+  color: white;
+}
+
+.policies-cta .btn--outline:hover {
+  background-color: white;
+  color: var(--color-primary);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 1024px) {
+  .policies-layout {
+    grid-template-columns: 180px 1fr;
+    gap: var(--space-6);
+  }
+}
+
+@media (max-width: 768px) {
+  .policies-hero__title {
+    font-size: var(--text-3xl);
+  }
+
+  .policies-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .policies-toc {
+    position: static;
+  }
+
+  .policies-toc__list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .policies-toc__list {
+    grid-template-columns: 1fr;
+  }
+
+  .policies-cta {
+    padding: var(--space-8) var(--space-5);
+  }
+}

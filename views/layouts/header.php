@@ -200,7 +200,7 @@ $activePage = $activePage ?? '';
   <div class="site-header__inner">
 
     <!-- Ô 1: Logo + Tên -->
-    <a href="/index.html"
+    <a href="../../views/user/index.php"
        class="site-header__cell site-header__logo"
        aria-label="Bite Me Donut — Trang chủ">
       <img
@@ -214,7 +214,7 @@ $activePage = $activePage ?? '';
 
     <!-- Ô 2: Home -->
     <div class="site-header__cell">
-      <a href="/index.html"
+      <a href="../../views/user/index.php"
          class="site-header__link <?= $activePage === 'home' ? 'is-active' : '' ?>">
         Home
       </a>
@@ -222,7 +222,7 @@ $activePage = $activePage ?? '';
 
     <!-- Ô 3: Products -->
     <div class="site-header__cell">
-      <a href="/products.html"
+      <a href="../../views/user/products.php"
          class="site-header__link <?= $activePage === 'products' ? 'is-active' : '' ?>">
         Products
       </a>
@@ -230,7 +230,7 @@ $activePage = $activePage ?? '';
 
     <!-- Ô 4: Contact -->
     <div class="site-header__cell">
-      <a href="/contact.html"
+      <a href="../../views/user/contact.php"
          class="site-header__link <?= $activePage === 'contact' ? 'is-active' : '' ?>">
         Contact
       </a>
@@ -238,7 +238,7 @@ $activePage = $activePage ?? '';
 
     <!-- Ô 5: Policies -->
     <div class="site-header__cell">
-      <a href="/policies.html"
+      <a href="../../views/user/policies.php"
          class="site-header__link <?= $activePage === 'policies' ? 'is-active' : '' ?>">
         Policies
       </a>
