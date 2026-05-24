@@ -265,7 +265,7 @@ $activePage = $activePage ?? '';
       </a>
 
       <!-- Cart -->
-      <a href="/cart.html"
+      <a href="../../views/user/cart.php"
          class="site-header__icon-btn"
          aria-label="Giỏ hàng">
         <svg xmlns="http://www.w3.org/2000/svg"

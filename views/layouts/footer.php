@@ -198,7 +198,7 @@ $activePage = $activePage ?? '';
         <span class="site-footer__brand-name">Bite Me<br>Donut</span>
       </a>
       <p class="site-footer__slogan">
-        Handcrafted donuts made with love,<br>
+        Handcrafted donuts made with love,
         every day from 7am – 10pm.
       </p>
     </div>
@@ -216,7 +216,7 @@ $activePage = $activePage ?? '';
       <p class="site-footer__col-title">Account</p>
       <a href="/login.html"  class="site-footer__link">Sign In</a>
       <a href="/orders.html" class="site-footer__link">My Orders</a>
-      <a href="/cart.html"   class="site-footer__link">My Cart</a>
+      <a href="../../views/user/cart.php"   class="site-footer__link">My Cart</a>
     </div>
 
     <!-- Col 4: Contact -->
