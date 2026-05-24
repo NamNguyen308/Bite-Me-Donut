@@ -10,20 +10,18 @@
  * Để highlight trang hiện tại, định nghĩa $activePage trước khi include:
  *   <?php $activePage = 'products'; include ...; ?>
  *   Các giá trị hợp lệ: 'home' | 'products' | 'contact' | 'policies'
+ *
+ * Hiển thị badge giỏ hàng (tuỳ chọn):
+ *   <?php $cartCount = 3; include ...; ?>
  */
 
 $activePage = $activePage ?? '';
 ?>
-<!DOCTYPE html>
-<!-- Chỉ dùng phần <head> + <header> này, KHÔNG đóng </body></html> ở đây -->
-<!-- Trang gọi vào sẽ tự đóng ở cuối -->
-
 <link rel="stylesheet" href="../../public/assets/css/root.css">
 
 <style>
   /* -------------------------------------------------------
-     Header — fixed navbar
-     Các style này bổ sung cho root.css, không ghi đè token
+     Header — fixed navbar, 6 ô bằng nhau trải full width
      ------------------------------------------------------- */
 
   .site-header {
@@ -33,29 +31,35 @@ $activePage = $activePage ?? '';
     right: 0;
     z-index: var(--z-sticky);
     background-color: var(--color-bg);
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 2px solid var(--color-border);
     height: var(--navbar-height);
   }
 
+  /* Grid 6 cột bằng nhau, full width */
   .site-header__inner {
-    display: flex;
-    align-items: stretch;      /* mỗi ô kéo dài full height */
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    align-items: stretch;
     height: 100%;
-    max-width: 100%;
-    border-left: 1px solid var(--color-border);  /* border trái cùng */
+    width: 100%;
+    border-left: 1px solid var(--color-border);
   }
 
-  /* ------- Logo ô đầu tiên ------- */
-  .site-header__logo {
+  /* Style chung cho MỌI ô trong header */
+  .site-header__cell {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    padding: 0 var(--space-5);
+    justify-content: center;
     border-right: 1px solid var(--color-border);
-    text-decoration: none;
-    white-space: nowrap;
-    flex-shrink: 0;
     transition: background-color var(--transition-fast);
+    overflow: hidden;
+  }
+
+  /* ------- Ô 1: Logo + Tên ------- */
+  .site-header__logo {
+    gap: var(--space-3);
+    text-decoration: none;
+    padding: 0 var(--space-4);
   }
 
   .site-header__logo:hover {
@@ -63,39 +67,29 @@ $activePage = $activePage ?? '';
   }
 
   .site-header__logo img {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     object-fit: contain;
     flex-shrink: 0;
   }
 
-  .site-header__brand {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.15;
-  }
-
   .site-header__brand-name {
     font-family: var(--font-heading);
-    font-size: var(--text-md);
+    font-size: 1rem;
     color: var(--color-text);
     text-transform: uppercase;
     letter-spacing: 0.03em;
+    line-height: 1.2;
+    white-space: nowrap;
   }
 
-  /* ------- Nav links ------- */
-  .site-header__nav {
-    display: flex;
-    align-items: stretch;
-    flex: 1;
-  }
-
+  /* ------- Ô 2–5: Nav links ------- */
   .site-header__link {
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: 1;
-    padding: 0;
     font-family: var(--font-body);
     font-size: var(--text-sm);
     font-weight: var(--font-weight-bold);
@@ -103,9 +97,7 @@ $activePage = $activePage ?? '';
     letter-spacing: 0.08em;
     color: var(--color-text-muted);
     text-decoration: none;
-    border-right: 1px solid var(--color-border);
     transition: background-color var(--transition-fast), color var(--transition-fast);
-    white-space: nowrap;
   }
 
   .site-header__link:hover {
@@ -118,62 +110,45 @@ $activePage = $activePage ?? '';
     color: var(--color-primary);
   }
 
-  /* ------- Spacer đẩy actions về phải ------- */
-  /* .site-header__spacer {
-    flex: 1;
-    border-right: 1px solid var(--color-border);
-  } */
+  /* ------- Ô 6: User + Cart icons trong 1 ô ------- */
+  .site-header__actions {
+    gap: var(--space-6);
+    padding: 0 var(--space-4);
+  }
 
-  /* ------- Icon actions (user + cart) ------- */
-  /* .site-header__actions {
-    display: flex;
-    align-items: stretch;
-  } */
-
-.site-header__actions {
+  .site-header__icon-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-5);         /* ← 2 icon cách nhau */
-    padding: 0 var(--space-5);
-    border-left: 1px solid var(--color-border);   /* ← chỉ cần border trái */
-    flex-shrink: 0;
-}
-
-  .site-header__action-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: auto;
     background: none;
     border: none;
     cursor: pointer;
     color: var(--color-primary);
     text-decoration: none;
-    transition: background-color var(--transition-fast);
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+    transition: background-color var(--transition-fast), color var(--transition-fast);
     position: relative;
   }
 
-  
-
-  .site-header__action-btn:hover {
-    background-color: transparent;  /* ← bỏ hover background */
+  .site-header__icon-btn:hover {
+    background-color: var(--color-primary-light);
     color: var(--color-primary-dark);
   }
 
-  .site-header__action-btn svg {
-    width: 22px;
-    height: 22px;
-    flex-shrink: 0;
+  .site-header__icon-btn svg {
+    width: 24px;
+    height: 24px;
+    display: block;
   }
 
-  /* Badge số lượng giỏ hàng */
+  /* Badge số giỏ hàng */
   .site-header__cart-badge {
     position: absolute;
-    top: 12px;
-    right: 10px;
-    min-width: 18px;
-    height: 18px;
+    top: -2px;
+    right: -4px;
+    min-width: 17px;
+    height: 17px;
     background-color: var(--color-primary);
     color: white;
     font-size: 10px;
@@ -182,80 +157,99 @@ $activePage = $activePage ?? '';
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 4px;
+    padding: 0 3px;
     line-height: 1;
+    pointer-events: none;
   }
 
-  /* ------- Offset cho nội dung trang không bị che bởi fixed header ------- */
+  /* ------- Offset nội dung trang (vì header fixed) ------- */
   .header-offset {
     height: var(--navbar-height);
   }
 
-  /* ------- Responsive: thu gọn padding khi màn nhỏ ------- */
-  @media (max-width: 900px) {
+  /* ------- Responsive ------- */
+  @media (max-width: 768px) {
     .site-header__link {
-      padding: 0 var(--space-4);
       font-size: var(--text-xs);
+      letter-spacing: 0.04em;
     }
-    .site-header__logo {
-      padding: 0 var(--space-4);
+    .site-header__brand-name {
+      font-size: var(--text-sm);
+    }
+    .site-header__logo img {
+      width: 32px;
+      height: 32px;
+    }
+    .site-header__actions {
+      gap: var(--space-3);
     }
   }
 
-  @media (max-width: 680px) {
-    /* Mobile: ẩn label text của nav, chỉ giữ icon actions */
-    .site-header__link span { display: none; }
-    .site-header__link { padding: 0 var(--space-3); }
+  @media (max-width: 520px) {
+    .site-header__inner {
+      grid-template-columns: 2fr repeat(4, 1fr) 1.2fr;
+    }
+    .site-header__link {
+      font-size: 9px;
+      letter-spacing: 0;
+    }
   }
 </style>
 
 <header class="site-header" role="banner">
   <div class="site-header__inner">
 
-    <!-- Logo + Tên thương hiệu -->
-    <a href="/index.html" class="site-header__logo" aria-label="Bite Me Donut — Homepage">
+    <!-- Ô 1: Logo + Tên -->
+    <a href="/index.html"
+       class="site-header__cell site-header__logo"
+       aria-label="Bite Me Donut — Trang chủ">
       <img
         src="../../public/assets/img/logo.png"
-        alt="Bite Me Donut logo"
-        width="36"
-        height="36"
+        alt="Logo Bite Me Donut"
+        width="40"
+        height="40"
       >
-      <div class="site-header__brand">
-        <span class="site-header__brand-name">Bite Me<br>Donut</span>
-      </div>
+      <span class="site-header__brand-name">Bite Me<br>Donut</span>
     </a>
 
-    <!-- Nav links -->
-    <nav class="site-header__nav" role="navigation" aria-label="Menu chính">
-
+    <!-- Ô 2: Home -->
+    <div class="site-header__cell">
       <a href="/index.html"
          class="site-header__link <?= $activePage === 'home' ? 'is-active' : '' ?>">
         Home
       </a>
+    </div>
 
+    <!-- Ô 3: Products -->
+    <div class="site-header__cell">
       <a href="/products.html"
          class="site-header__link <?= $activePage === 'products' ? 'is-active' : '' ?>">
         Products
       </a>
+    </div>
 
+    <!-- Ô 4: Contact -->
+    <div class="site-header__cell">
       <a href="/contact.html"
          class="site-header__link <?= $activePage === 'contact' ? 'is-active' : '' ?>">
         Contact
       </a>
+    </div>
 
+    <!-- Ô 5: Policies -->
+    <div class="site-header__cell">
       <a href="/policies.html"
          class="site-header__link <?= $activePage === 'policies' ? 'is-active' : '' ?>">
         Policies
       </a>
+    </div>
 
-    </nav>
-
-    <!-- Actions: User + Cart -->
-    <div class="site-header__actions">
+    <!-- Ô 6: User + Cart (cùng 1 ô) -->
+    <div class="site-header__cell site-header__actions">
 
       <!-- User -->
       <a href="/login.html"
-         class="site-header__action-btn"
+         class="site-header__icon-btn"
          aria-label="Tài khoản">
         <svg xmlns="http://www.w3.org/2000/svg"
              viewBox="0 0 24 24"
@@ -272,7 +266,7 @@ $activePage = $activePage ?? '';
 
       <!-- Cart -->
       <a href="/cart.html"
-         class="site-header__action-btn"
+         class="site-header__icon-btn"
          aria-label="Giỏ hàng">
         <svg xmlns="http://www.w3.org/2000/svg"
              viewBox="0 0 24 24"
@@ -286,19 +280,18 @@ $activePage = $activePage ?? '';
           <line x1="3" y1="6" x2="21" y2="6"/>
           <path d="M16 10a4 4 0 0 1-8 0"/>
         </svg>
-        <?php
-          /* Hiển thị badge nếu giỏ hàng có sản phẩm.
-             Truyền $cartCount từ trang trước khi include header.
-             Ví dụ: $cartCount = count($_SESSION['cart'] ?? []);  */
-          if (!empty($cartCount) && $cartCount > 0): ?>
-          <span class="site-header__cart-badge"><?= min($cartCount, 99) ?></span>
+        <?php if (!empty($cartCount) && $cartCount > 0): ?>
+          <span class="site-header__cart-badge"
+                aria-label="<?= (int)$cartCount ?> sản phẩm trong giỏ">
+            <?= min((int)$cartCount, 99) ?>
+          </span>
         <?php endif; ?>
       </a>
 
-    </div><!-- /.site-header__actions -->
+    </div><!-- /Ô 6 -->
 
   </div><!-- /.site-header__inner -->
 </header>
 
-<!-- Đẩy nội dung trang xuống đúng chiều cao header (vì header là fixed) -->
+<!-- Đẩy nội dung xuống đúng chiều cao header fixed -->
 <div class="header-offset" aria-hidden="true"></div>
