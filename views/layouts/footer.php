@@ -237,7 +237,7 @@ $activePage = $activePage ?? '';
           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
           <circle cx="12" cy="9" r="2.5"/>
         </svg>
-        <span>123 Donut Street,<br>Ho Chi Minh City</span>
+        <span>279 Nguyen Tri Phuong,<br>Ho Chi Minh City</span>
       </div>
 
       <div class="site-footer__contact-item">
@@ -253,7 +253,7 @@ $activePage = $activePage ?? '';
              aria-hidden="true">
           <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.86 19.86 0 0 1 3.09 4.18 2 2 0 0 1 5.07 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L9.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
         </svg>
-        <a href="tel:+84000000000">+84 000 000 000</a>
+        <a href="tel:+840901234567">0901 234 567</a>
       </div>
 
       <div class="site-footer__contact-item">
@@ -270,7 +270,7 @@ $activePage = $activePage ?? '';
           <rect x="2" y="4" width="20" height="16" rx="2"/>
           <path d="M2 7l10 7 10-7"/>
         </svg>
-        <a href="mailto:hello@bite-me-donut.vn">hello@bite-me-donut.vn</a>
+        <a href="mailto:hello@bitemedonuts.com">hello@bitemedonuts.com</a>
       </div>
 
     </div><!-- /Col 4 -->
