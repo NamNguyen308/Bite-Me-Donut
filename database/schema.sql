@@ -208,7 +208,9 @@ CREATE TABLE risk_logs (
 CREATE TABLE products (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
+    short_description VARCHAR(255) NULL,
     description TEXT NULL,
+    ingredient TEXT NULL,
     price DECIMAL(12, 2) UNSIGNED NOT NULL,
     stock INT UNSIGNED NOT NULL DEFAULT 0,
     image VARCHAR(1000) NULL,

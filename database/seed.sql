@@ -75,7 +75,9 @@ INSERT INTO users (
 INSERT INTO products (
     id,
     name,
+    short_description,
     description,
+    ingredient,
     price,
     stock,
     image,
@@ -86,7 +88,9 @@ INSERT INTO products (
 (
     1,
     'Wireless Mouse',
+    'Chuột không dây cơ bản cho nhu cầu văn phòng.',
     'Basic wireless mouse for testing cart and order API.',
+    'Plastic shell, optical sensor, USB receiver, AA battery',
     150000,
     20,
     'wireless-mouse.jpg',
@@ -97,7 +101,9 @@ INSERT INTO products (
 (
     2,
     'Mechanical Keyboard',
+    'Bàn phím cơ phục vụ demo danh sách sản phẩm.',
     'Mechanical keyboard for demo product listing.',
+    'Plastic frame, mechanical switches, keycaps, USB cable',
     750000,
     15,
     'mechanical-keyboard.jpg',
@@ -108,7 +114,9 @@ INSERT INTO products (
 (
     3,
     'USB-C Cable',
+    'Cáp sạc USB-C dùng cho thiết bị di động.',
     'USB-C charging cable.',
+    'Copper wire, PVC coating, USB-C connector',
     90000,
     50,
     'usb-c-cable.jpg',
@@ -119,7 +127,9 @@ INSERT INTO products (
 (
     4,
     'Laptop Stand',
+    'Giá đỡ laptop bằng nhôm.',
     'Aluminum laptop stand.',
+    'Aluminum alloy, silicone anti-slip pad',
     320000,
     10,
     'laptop-stand.jpg',
@@ -130,7 +140,9 @@ INSERT INTO products (
 (
     5,
     'Inactive Product',
+    'Sản phẩm inactive dùng để test trạng thái hiển thị.',
     'This product is inactive and used for product availability testing.',
+    'Demo ingredient',
     100000,
     5,
     'inactive-product.jpg',
