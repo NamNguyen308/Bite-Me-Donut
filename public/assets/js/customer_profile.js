@@ -316,7 +316,7 @@ async function performLogout() {
     clearToken();
     closeLogoutModal();
     showToast('Logged out. Goodbye!', 'success', 2000);
-    setTimeout(() => { window.location.href = '/login.php'; }, 1800);
+    setTimeout(() => { window.location.href = '../../views/auth/login.php'; }, 1800);
 }
 
 /* ─────────────────────────────────────────────────────────────

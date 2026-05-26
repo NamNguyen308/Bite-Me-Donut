@@ -31,6 +31,12 @@ $router->get('/api/users/{id}', [UserController::class, 'show']);
 
 $router->get('/api/admin/dashboard', [AdminController::class, 'dashboard']);
 
+$router->get('/api/admin/products', [ProductController::class, 'adminIndex']);
+$router->get('/api/admin/products/{id}', [ProductController::class, 'adminShow']);
+$router->post('/api/admin/products', [ProductController::class, 'store']);
+$router->post('/api/admin/products/{id}', [ProductController::class, 'update']);
+$router->delete('/api/admin/products/{id}', [ProductController::class, 'destroy']);
+
 $router->get('/api/products', [ProductController::class, 'index']);
 $router->get('/api/products/{id}', [ProductController::class, 'show']);
 
