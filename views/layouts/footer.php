@@ -215,7 +215,7 @@ $activePage = $activePage ?? '';
     <div class="site-footer__col">
       <p class="site-footer__col-title">Account</p>
       <a href="../../views/user/customer_profile.php"  class="site-footer__link">My Profile</a>
-      <a href="../../views/user/orders.php" class="site-footer__link">My Orders</a>
+      <a href="../../views/user/customer_orders.php" class="site-footer__link">My Orders</a>
       <a href="../../views/user/cart.php"   class="site-footer__link">My Cart</a>
     </div>
 

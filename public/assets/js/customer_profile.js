@@ -1,7 +1,7 @@
 /**
  * profile.js — Bite-Me-Donut
  * Handles: load user profile, edit mode, logout modal, toast notifications
- * Auth:    Bearer token from localStorage (key: "access_token")
+ * Auth:    Bearer token stored in localStorage (key: "access_token")
  * API:     GET  /api/users/me
  *          POST /api/auth/logout
  */
@@ -15,12 +15,21 @@ const API_BASE = '/api';
 const TOKEN_KEY = 'access_token';
 
 /* ─────────────────────────────────────────────────────────────
+   SVG ICON HELPERS (no emoji — all inline SVG strings)
+───────────────────────────────────────────────────────────── */
+const ICONS = {
+    check: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+    cross: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+    info: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+    warn: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+};
+
+/* ─────────────────────────────────────────────────────────────
    DOM REFERENCES
 ───────────────────────────────────────────────────────────── */
 const $ = (id) => document.getElementById(id);
 
 const DOM = {
-    // Layout states
     pageLoader: $('pageLoader'),
     profileError: $('profileError'),
     profileErrorMsg: $('profileErrorMsg'),
@@ -32,6 +41,11 @@ const DOM = {
     heroRole: $('heroRole'),
     heroJoin: $('heroJoin'),
     heroPhone: $('heroPhone'),
+
+    // Sidebar mini-profile
+    sidebarAvatar: $('sidebarAvatar'),
+    sidebarName: $('sidebarName'),
+    sidebarRole: $('sidebarRole'),
 
     // Info view
     infoName: $('infoName'),
@@ -52,42 +66,33 @@ const DOM = {
     cancelEditBtn: $('cancelEditBtn'),
     editAlert: $('editAlert'),
 
-    // Stats
-    statOrders: $('statOrders'),
-    statCartItems: $('statCartItems'),
-    statTotal: $('statTotal'),
-
-    // Security / session
+    // Security
     sessionDesc: $('sessionDesc'),
 
     // Logout
     logoutBtn: $('logoutBtn'),
+    sidebarLogoutBtn: $('sidebarLogoutBtn'),
     revokeBtn: $('revokeBtn'),
     logoutModal: $('logoutModal'),
     logoutModalClose: $('logoutModalClose'),
     confirmLogoutBtn: $('confirmLogoutBtn'),
     cancelLogoutBtn: $('cancelLogoutBtn'),
 
-    // Toast
     toastContainer: $('toastContainer'),
 };
 
 /* ─────────────────────────────────────────────────────────────
-   UTILITIES
+   AUTH HELPERS
 ───────────────────────────────────────────────────────────── */
-
-/** Get stored access token */
 function getToken() {
     return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
 }
 
-/** Remove token from all storages */
 function clearToken() {
     localStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(TOKEN_KEY);
 }
 
-/** Authenticated fetch wrapper */
 async function apiFetch(path, options = {}) {
     const token = getToken();
     const headers = {
@@ -95,75 +100,48 @@ async function apiFetch(path, options = {}) {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(options.headers || {}),
     };
-    const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
-    const data = await response.json();
-    return { ok: response.ok, status: response.status, data };
-}
-
-/**
- * Format Vietnamese date
- * @param {string} dateStr — ISO string from API
- */
-function formatDate(dateStr) {
-    if (!dateStr) return '—';
-    try {
-        return new Intl.DateTimeFormat('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        }).format(new Date(dateStr));
-    } catch {
-        return dateStr;
-    }
-}
-
-/** Format VND currency */
-function formatVND(amount) {
-    if (amount === null || amount === undefined) return '—';
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-    }).format(amount);
-}
-
-/** Translate role */
-function translateRole(role) {
-    const map = { admin: 'Quản trị viên', customer: 'Khách hàng' };
-    return map[role] || role || '—';
-}
-
-/** Translate active status */
-function translateStatus(isActive) {
-    if (isActive === 1 || isActive === true) {
-        return '<span class="badge badge--success">Đang hoạt động</span>';
-    }
-    return '<span class="badge badge--danger">Tạm khóa</span>';
+    const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    const data = await res.json();
+    return { ok: res.ok, status: res.status, data };
 }
 
 /* ─────────────────────────────────────────────────────────────
-   TOAST
+   FORMAT HELPERS
 ───────────────────────────────────────────────────────────── */
-/**
- * Show a toast notification
- * @param {string} message
- * @param {'success'|'danger'|'warning'|'info'} type
- * @param {number} duration  ms
- */
+function formatDate(str) {
+    if (!str) return '—';
+    try {
+        return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(str));
+    } catch { return str; }
+}
+
+function translateRole(role) {
+    return { admin: 'Quản trị viên', customer: 'Khách hàng' }[role] || role || '—';
+}
+
+function translateStatus(isActive) {
+    return (isActive === 1 || isActive === true)
+        ? '<span class="badge badge--success">Active</span>'
+        : '<span class="badge badge--danger">Inactive</span>';
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TOAST  (SVG icons only)
+───────────────────────────────────────────────────────────── */
 function showToast(message, type = 'success', duration = 3500) {
-    const icons = { success: '✅', danger: '❌', warning: '⚠️', info: 'ℹ️' };
+    const iconMap = { success: ICONS.check, danger: ICONS.cross, warning: ICONS.warn, info: ICONS.info };
     const toast = document.createElement('div');
     toast.className = `toast toast--${type}`;
-    toast.innerHTML = `<span>${icons[type] || '🍩'}</span> <span>${message}</span>`;
+    toast.innerHTML = `<span class="toast__icon">${iconMap[type] || ICONS.info}</span><span>${message}</span>`;
     DOM.toastContainer.appendChild(toast);
-
     setTimeout(() => {
         toast.classList.add('toast--out');
-        toast.addEventListener('animationend', () => toast.remove());
+        toast.addEventListener('animationend', () => toast.remove(), { once: true });
     }, duration);
 }
 
 /* ─────────────────────────────────────────────────────────────
-   PAGE STATE HELPERS
+   PAGE STATES
 ───────────────────────────────────────────────────────────── */
 function showLoader() { DOM.pageLoader.classList.remove('hidden'); }
 function hideLoader() { DOM.pageLoader.classList.add('hidden'); }
@@ -178,22 +156,26 @@ function showContent() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   POPULATE PROFILE
+   POPULATE
 ───────────────────────────────────────────────────────────── */
 function populateProfile(user) {
-    const name = user.name || user.full_name || '(Chưa cập nhật)';
+    const name = user.name || user.full_name || '(Not updated)';
     const email = user.email || '—';
     const phone = user.phone || '—';
     const role = translateRole(user.role);
     const joined = formatDate(user.created_at);
 
-    // ── Hero
+    // Hero
     DOM.heroName.textContent = name;
     DOM.heroPhone.textContent = phone;
-    DOM.heroJoin.textContent = `Tham gia từ ${joined}`;
+    DOM.heroJoin.textContent = `Joined ${joined}`;
     DOM.heroRole.textContent = role;
 
-    // ── Info rows
+    // Sidebar mini
+    DOM.sidebarName.textContent = name;
+    DOM.sidebarRole.textContent = role;
+
+    // Info rows
     DOM.infoName.textContent = name;
     DOM.infoEmail.textContent = email;
     DOM.infoPhone.textContent = phone;
@@ -201,21 +183,19 @@ function populateProfile(user) {
     DOM.infoStatus.innerHTML = translateStatus(user.is_active);
     DOM.infoCreated.textContent = joined;
 
-    // ── Pre-fill edit form
-    DOM.editName.value = name !== '(Chưa cập nhật)' ? name : '';
+    // Pre-fill edit form
+    DOM.editName.value = name !== '(Not updated)' ? name : '';
     DOM.editEmail.value = email !== '—' ? email : '';
     DOM.editPhone.value = phone;
 }
 
 /* ─────────────────────────────────────────────────────────────
-   FETCH USER PROFILE
+   LOAD PROFILE
 ───────────────────────────────────────────────────────────── */
 async function loadProfile() {
-    const token = getToken();
-
-    if (!token) {
+    if (!getToken()) {
         hideLoader();
-        showError('Bạn chưa đăng nhập. Vui lòng đăng nhập để xem hồ sơ.');
+        showError('You are not logged in. Please log in to view your profile.');
         return;
     }
 
@@ -223,62 +203,29 @@ async function loadProfile() {
 
     try {
         const { ok, data } = await apiFetch('/users/me');
-
         hideLoader();
 
         if (!ok) {
-            const code = data?.error_code || '';
-            const msgMap = {
-                TOKEN_MISSING: 'Phiên đăng nhập không hợp lệ.',
-                TOKEN_INVALID: 'Token không hợp lệ. Vui lòng đăng nhập lại.',
-                TOKEN_EXPIRED: 'Phiên đăng nhập đã hết hạn.',
-                TOKEN_REVOKED: 'Token đã bị thu hồi. Vui lòng đăng nhập lại.',
+            const msgs = {
+                TOKEN_MISSING: 'Invalid session.',
+                TOKEN_INVALID: 'Invalid token. Please log in again.',
+                TOKEN_EXPIRED: 'Session expired.',
+                TOKEN_REVOKED: 'Token has been revoked.',
             };
             clearToken();
-            showError(msgMap[code] || data?.message || 'Không thể tải hồ sơ.');
+            showError(msgs[data?.error_code] || data?.message || 'Failed to load profile.');
             return;
         }
 
-        // API có thể trả data.user hoặc data.data hoặc thẳng data
         const user = data.user || data.data || data;
         populateProfile(user);
         showContent();
-        loadStats();
 
     } catch (err) {
         hideLoader();
-        showError('Lỗi kết nối đến máy chủ. Vui lòng thử lại sau.');
-        console.error('[Profile] loadProfile error:', err);
+        showError('Failed to load profile.');
+        console.error('[Profile] loadProfile:', err);
     }
-}
-
-/* ─────────────────────────────────────────────────────────────
-   FETCH STATS (Orders, Cart)
-   Graceful — nếu API lỗi thì chỉ hiện "—"
-───────────────────────────────────────────────────────────── */
-async function loadStats() {
-    // Orders
-    try {
-        const { ok, data } = await apiFetch('/orders');
-        if (ok) {
-            const orders = data.data || data.orders || (Array.isArray(data) ? data : []);
-            DOM.statOrders.textContent = orders.length;
-
-            // Tổng chi tiêu
-            const total = orders.reduce((sum, o) => sum + parseFloat(o.total || o.total_amount || 0), 0);
-            DOM.statTotal.textContent = formatVND(total);
-        }
-    } catch { /* ignore */ }
-
-    // Cart
-    try {
-        const { ok, data } = await apiFetch('/cart');
-        if (ok) {
-            const items = data.data?.items || data.items || [];
-            const count = items.reduce((sum, i) => sum + (i.quantity || 0), 0);
-            DOM.statCartItems.textContent = count;
-        }
-    } catch { /* ignore */ }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -287,17 +234,14 @@ async function loadStats() {
 function enterEditMode() {
     DOM.infoView.classList.add('hidden');
     DOM.editForm.classList.remove('hidden');
-    DOM.editBtn.textContent = '✏️ Đang chỉnh sửa';
     DOM.editBtn.disabled = true;
     DOM.editAlert.classList.add('hidden');
-    DOM.editAlert.textContent = '';
     DOM.editName.focus();
 }
 
 function exitEditMode() {
     DOM.infoView.classList.remove('hidden');
     DOM.editForm.classList.add('hidden');
-    DOM.editBtn.textContent = '✏️ Chỉnh sửa';
     DOM.editBtn.disabled = false;
 }
 
@@ -311,89 +255,67 @@ async function saveProfile() {
     const name = DOM.editName.value.trim();
     const email = DOM.editEmail.value.trim();
 
-    if (!name) {
-        showEditAlert('Vui lòng nhập họ và tên.');
-        DOM.editName.focus();
-        return;
-    }
-
+    if (!name) { showEditAlert('Please enter your full name.'); DOM.editName.focus(); return; }
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showEditAlert('Email không hợp lệ.');
-        DOM.editEmail.focus();
-        return;
+        showEditAlert('Invalid email.'); DOM.editEmail.focus(); return;
     }
 
     DOM.saveBtn.disabled = true;
-    DOM.saveBtn.textContent = '⏳ Đang lưu...';
+    DOM.saveBtn.textContent = 'Saving...';
 
     try {
-        // Note: endpoint update profile tuỳ backend — thường là PATCH /api/users/me
-        // Nếu chưa có endpoint, ta chỉ cập nhật local UI và thông báo thành công mock
         const { ok, data } = await apiFetch('/users/me', {
             method: 'PATCH',
             body: JSON.stringify({ name, email }),
         });
 
-        if (ok) {
-            // Cập nhật lại giao diện
+        const graceful = !ok && ['NOT_FOUND', 'METHOD_NOT_ALLOWED'].includes(data?.error_code);
+
+        if (ok || graceful) {
             DOM.infoName.textContent = name;
             DOM.infoEmail.textContent = email || '—';
             DOM.heroName.textContent = name;
+            DOM.sidebarName.textContent = name;
             exitEditMode();
-            showToast('Cập nhật hồ sơ thành công! 🎉', 'success');
+            showToast(
+                ok ? 'Profile updated successfully!' : 'Interface updated (API endpoint not implemented).',
+                ok ? 'success' : 'warning',
+                ok ? 3500 : 5000
+            );
         } else {
-            const code = data?.error_code || '';
-            const msgMap = {
-                VALIDATION_ERROR: data?.errors ? Object.values(data.errors).join(', ') : 'Dữ liệu không hợp lệ.',
-                NOT_FOUND: 'Không tìm thấy phương thức cập nhật.',
-                METHOD_NOT_ALLOWED: 'API chưa hỗ trợ cập nhật hồ sơ. Thay đổi đã được lưu cục bộ.',
-            };
-            // Graceful fallback nếu endpoint chưa tồn tại
-            if (code === 'NOT_FOUND' || code === 'METHOD_NOT_ALLOWED' || data?.status === 404 || data?.status === 405) {
-                DOM.infoName.textContent = name;
-                DOM.infoEmail.textContent = email || '—';
-                DOM.heroName.textContent = name;
-                exitEditMode();
-                showToast('Giao diện đã cập nhật. (API endpoint chưa được triển khai)', 'warning', 5000);
-            } else {
-                showEditAlert(msgMap[code] || data?.message || 'Cập nhật thất bại.');
-            }
+            showEditAlert(data?.message || 'Failed to update profile.');
         }
+
     } catch {
-        // Graceful fallback — update UI locally
+        // Network error — update UI locally
         DOM.infoName.textContent = name;
         DOM.infoEmail.textContent = email || '—';
         DOM.heroName.textContent = name;
+        DOM.sidebarName.textContent = name;
         exitEditMode();
-        showToast('Lỗi mạng. Giao diện đã cập nhật cục bộ.', 'warning', 5000);
+        showToast('Network error. Interface updated locally.', 'warning', 5000);
     } finally {
         DOM.saveBtn.disabled = false;
-        DOM.saveBtn.textContent = '💾 Lưu thay đổi';
+        // Restore button content (SVG + text) — easier to re-set innerHTML
+        DOM.saveBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Changes`;
     }
 }
 
 /* ─────────────────────────────────────────────────────────────
    LOGOUT
 ───────────────────────────────────────────────────────────── */
-function openLogoutModal() {
-    DOM.logoutModal.classList.add('is-open');
-}
-
-function closeLogoutModal() {
-    DOM.logoutModal.classList.remove('is-open');
-}
+function openLogoutModal() { DOM.logoutModal.classList.add('is-open'); }
+function closeLogoutModal() { DOM.logoutModal.classList.remove('is-open'); }
 
 async function performLogout() {
     DOM.confirmLogoutBtn.disabled = true;
-    DOM.confirmLogoutBtn.textContent = '⏳ Đang đăng xuất...';
+    DOM.confirmLogoutBtn.textContent = 'Logging out...';
 
-    try {
-        await apiFetch('/auth/logout', { method: 'POST' });
-    } catch { /* always clear regardless */ }
+    try { await apiFetch('/auth/logout', { method: 'POST' }); } catch { /* always clear */ }
 
     clearToken();
     closeLogoutModal();
-    showToast('Đã đăng xuất. Tạm biệt! 🍩', 'success', 2000);
+    showToast('Logged out. Goodbye!', 'success', 2000);
     setTimeout(() => { window.location.href = '/login.php'; }, 1800);
 }
 
@@ -401,34 +323,19 @@ async function performLogout() {
    SESSION INFO
 ───────────────────────────────────────────────────────────── */
 function updateSessionInfo() {
-    const token = getToken();
-    if (!token) {
-        DOM.sessionDesc.textContent = 'Chưa đăng nhập';
-        return;
-    }
-    // We can decode JWT expiry if it's a JWT; otherwise just show active.
-    // This project uses opaque tokens so we just show a generic message.
-    const now = new Intl.DateTimeFormat('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        day: '2-digit',
-        month: '2-digit',
-    }).format(new Date());
-    DOM.sessionDesc.textContent = `Đăng nhập lúc ${now}`;
+    if (!getToken()) { DOM.sessionDesc.textContent = 'Not logged in'; return; }
+    const now = new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }).format(new Date());
+    DOM.sessionDesc.textContent = `Logged in at ${now}`;
 }
 
 /* ─────────────────────────────────────────────────────────────
    EVENT BINDINGS
 ───────────────────────────────────────────────────────────── */
 function bindEvents() {
-    // Edit toggle
     DOM.editBtn.addEventListener('click', enterEditMode);
     DOM.cancelEditBtn.addEventListener('click', exitEditMode);
-
-    // Save
     DOM.saveBtn.addEventListener('click', saveProfile);
 
-    // Enter key in edit fields
     [DOM.editName, DOM.editEmail].forEach((el) => {
         el.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') saveProfile();
@@ -436,25 +343,21 @@ function bindEvents() {
         });
     });
 
-    // Logout buttons (navbar + security card)
-    DOM.logoutBtn.addEventListener('click', openLogoutModal);
-    DOM.revokeBtn.addEventListener('click', openLogoutModal);
+    // All logout triggers
+    [DOM.logoutBtn, DOM.sidebarLogoutBtn, DOM.revokeBtn].forEach((btn) => {
+        btn?.addEventListener('click', openLogoutModal);
+    });
 
-    // Modal controls
     DOM.logoutModalClose.addEventListener('click', closeLogoutModal);
     DOM.cancelLogoutBtn.addEventListener('click', closeLogoutModal);
     DOM.confirmLogoutBtn.addEventListener('click', performLogout);
 
-    // Close modal on overlay click
     DOM.logoutModal.addEventListener('click', (e) => {
         if (e.target === DOM.logoutModal) closeLogoutModal();
     });
 
-    // Close modal on Escape
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && DOM.logoutModal.classList.contains('is-open')) {
-            closeLogoutModal();
-        }
+        if (e.key === 'Escape' && DOM.logoutModal.classList.contains('is-open')) closeLogoutModal();
     });
 }
 

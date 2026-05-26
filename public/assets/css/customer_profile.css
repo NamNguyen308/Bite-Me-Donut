@@ -1,16 +1,169 @@
 /* ============================================================
-   PROFILE.CSS — Trang hồ sơ khách hàng
-   Bite-Me-Donut Design System
+   PROFILE.CSS — Bite-Me-Donut
+   Trang hồ sơ khách hàng
    ============================================================ */
 
 /* ============================================================
-   1. LOADING STATE
+   1. LAYOUT WRAPPER — sidebar + main side by side
    ============================================================ */
-.profile-page {
+.profile-layout {
+    display: flex;
     min-height: calc(100vh - var(--navbar-height));
-    padding-bottom: var(--space-20);
+    align-items: stretch;
 }
 
+/* ============================================================
+   2. SIDEBAR
+   ============================================================ */
+.profile-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background-color: var(--color-bg-card);
+    border-right: var(--border-width) solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-8) 0 var(--space-8);
+    position: sticky;
+    top: var(--navbar-height);
+    height: calc(100vh - var(--navbar-height));
+    overflow-y: auto;
+}
+
+/* ── Sidebar avatar block ── */
+.sidebar-avatar-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0 var(--space-6) var(--space-6);
+    border-bottom: var(--border-width) solid var(--color-border);
+    margin-bottom: var(--space-4);
+}
+
+.sidebar-avatar-ring {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-full);
+    padding: 3px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    box-shadow: 0 4px 16px rgba(233, 30, 140, 0.25);
+}
+
+.sidebar-avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    border: 2px solid white;
+    display: block;
+}
+
+.sidebar-avatar-name {
+    font-family: var(--font-heading);
+    font-size: var(--text-md);
+    color: var(--color-text);
+    text-align: center;
+    line-height: 1.3;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-role {
+    font-size: var(--text-xs);
+}
+
+/* ── Sidebar nav items ── */
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: 0 var(--space-4);
+    flex: 1;
+}
+
+.sidebar-nav__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-muted);
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    font-family: var(--font-body);
+    transition:
+        background-color var(--transition-fast),
+        color var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+.sidebar-nav__item:hover {
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
+    transform: translateX(3px);
+}
+
+.sidebar-nav__item.active {
+    background-color: var(--color-primary);
+    color: var(--color-text-light);
+    box-shadow: 0 4px 12px rgba(233, 30, 140, 0.30);
+}
+
+.sidebar-nav__item.active .sidebar-nav__icon svg {
+    stroke: white;
+}
+
+.sidebar-nav__icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+}
+
+.sidebar-nav__label {
+    line-height: 1;
+}
+
+/* Logout — danger tint */
+.sidebar-nav__item--logout {
+    color: var(--color-danger);
+}
+
+.sidebar-nav__item--logout svg {
+    stroke: var(--color-danger);
+}
+
+.sidebar-nav__item--logout:hover {
+    background-color: #ffebee;
+    color: var(--color-danger);
+}
+
+.sidebar-nav__divider {
+    height: 1px;
+    background-color: var(--color-border);
+    margin: var(--space-3) 0;
+}
+
+/* ============================================================
+   3. MAIN AREA
+   ============================================================ */
+.profile-main {
+    flex: 1;
+    min-width: 0;
+    padding: var(--space-8) var(--space-10);
+}
+
+/* ── Loading ── */
 .loading-overlay {
     display: flex;
     align-items: center;
@@ -18,8 +171,40 @@
     min-height: 60vh;
 }
 
+.loader-donut {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-5);
+}
+
+.loader-donut__spinner {
+    width: 64px;
+    height: 64px;
+    animation: spinner-rotate 1s linear infinite;
+    filter: drop-shadow(0 4px 16px rgba(233, 30, 140, 0.3));
+}
+
+@keyframes spinner-rotate {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loader-donut p {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: 0.04em;
+}
+
+/* ── Error ── */
+.profile-error {
+    padding: var(--space-8);
+}
+
 /* ============================================================
-   2. HERO BANNER
+   4. HERO BANNER
    ============================================================ */
 .profile-hero {
     position: relative;
@@ -33,20 +218,19 @@
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(ellipse at 20% 50%, rgba(233, 30, 140, 0.18) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 20%, rgba(247, 168, 212, 0.25) 0%, transparent 55%),
-        linear-gradient(135deg, var(--color-bg-alt) 0%, #fff8ee 50%, var(--color-primary-light) 100%);
+        radial-gradient(ellipse at 15% 50%, rgba(233, 30, 140, 0.15) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 20%, rgba(247, 168, 212, 0.22) 0%, transparent 55%),
+        linear-gradient(135deg, var(--color-bg-alt) 0%, #fff8ee 55%, var(--color-primary-light) 100%);
     z-index: 0;
 }
 
-/* Polka-dot texture overlay */
+/* polka dot texture */
 .profile-hero__bg::after {
     content: '';
     position: absolute;
     inset: 0;
-    background-image:
-        radial-gradient(circle, rgba(233, 30, 140, 0.08) 1.5px, transparent 1.5px);
-    background-size: 28px 28px;
+    background-image: radial-gradient(circle, rgba(233, 30, 140, 0.07) 1.5px, transparent 1.5px);
+    background-size: 26px 26px;
     z-index: 1;
 }
 
@@ -56,7 +240,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-8);
-    padding: var(--space-10) var(--space-10);
+    padding: var(--space-10);
 }
 
 /* ── Avatar ── */
@@ -66,22 +250,22 @@
 }
 
 .avatar-ring {
-    width: 140px;
-    height: 140px;
+    width: 130px;
+    height: 130px;
     border-radius: var(--radius-full);
     padding: 4px;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary), #fff);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary), white);
     box-shadow:
-        0 8px 32px rgba(233, 30, 140, 0.30),
-        0 0 0 6px rgba(233, 30, 140, 0.10);
+        0 8px 32px rgba(233, 30, 140, 0.28),
+        0 0 0 6px rgba(233, 30, 140, 0.09);
     transition: transform var(--transition-normal), box-shadow var(--transition-normal);
 }
 
 .avatar-ring:hover {
     transform: scale(1.04) rotate(-2deg);
     box-shadow:
-        0 12px 40px rgba(233, 30, 140, 0.40),
-        0 0 0 8px rgba(233, 30, 140, 0.14);
+        0 12px 40px rgba(233, 30, 140, 0.38),
+        0 0 0 8px rgba(233, 30, 140, 0.13);
 }
 
 .avatar-img {
@@ -97,12 +281,11 @@
     position: absolute;
     bottom: 8px;
     right: 8px;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     background-color: var(--color-success);
     border-radius: var(--radius-full);
     border: 3px solid white;
-    box-shadow: 0 2px 6px rgba(67, 160, 71, 0.4);
     animation: status-pulse 2.5s ease-in-out infinite;
 }
 
@@ -110,11 +293,11 @@
 
     0%,
     100% {
-        box-shadow: 0 2px 6px rgba(67, 160, 71, 0.4);
+        box-shadow: 0 0 0 0 rgba(67, 160, 71, 0.4);
     }
 
     50% {
-        box-shadow: 0 2px 12px rgba(67, 160, 71, 0.7);
+        box-shadow: 0 0 0 6px rgba(67, 160, 71, 0);
     }
 }
 
@@ -130,11 +313,7 @@
     color: var(--color-text);
     line-height: var(--line-height-tight);
     margin-bottom: var(--space-3);
-    letter-spacing: -0.01em;
-
-    /* Slide-in animation */
-    animation: slide-up 0.5s ease both;
-    animation-delay: 0.1s;
+    animation: slide-up 0.45s ease both 0.1s;
 }
 
 .profile-hero__meta {
@@ -142,8 +321,7 @@
     align-items: center;
     gap: var(--space-3);
     margin-bottom: var(--space-3);
-    animation: slide-up 0.5s ease both;
-    animation-delay: 0.2s;
+    animation: slide-up 0.45s ease both 0.2s;
 }
 
 .profile-hero__join {
@@ -152,19 +330,24 @@
 }
 
 .profile-hero__phone {
-    font-size: var(--text-md);
+    font-size: var(--text-sm);
     color: var(--color-text-muted);
     font-weight: var(--font-weight-medium);
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    animation: slide-up 0.5s ease both;
-    animation-delay: 0.3s;
+    animation: slide-up 0.45s ease both 0.3s;
 }
 
+/* Phone icon inline via pseudo — replaced with SVG inline in html via CSS background trick */
 .profile-hero__phone::before {
-    content: '📞';
-    font-size: var(--text-base);
+    content: '';
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a6352' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.58 4.4 2 2 0 0 1 3.55 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.12 6.12l.88-.88a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
 }
 
 @keyframes slide-up {
@@ -180,23 +363,17 @@
 }
 
 /* ============================================================
-   3. PROFILE GRID LAYOUT
+   5. PROFILE GRID (info + security)
    ============================================================ */
 .profile-grid {
     display: grid;
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: 1fr 360px;
     gap: var(--space-6);
     align-items: start;
 }
 
-.profile-right-col {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-6);
-}
-
 /* ============================================================
-   4. PROFILE CARD — shared base
+   6. PROFILE CARD — shared base
    ============================================================ */
 .profile-card {
     background-color: var(--color-bg-card);
@@ -205,35 +382,21 @@
     padding: var(--space-6);
     box-shadow: var(--shadow-sm);
     transition: box-shadow var(--transition-normal);
+    animation: card-reveal 0.4s ease both;
+}
 
-    /* Staggered entrance */
-    animation: card-reveal 0.45s ease both;
+.profile-card:nth-child(2) {
+    animation-delay: 0.1s;
 }
 
 .profile-card:hover {
     box-shadow: var(--shadow-md);
 }
 
-.profile-card:nth-child(1) {
-    animation-delay: 0.15s;
-}
-
-.profile-card:nth-child(2) {
-    animation-delay: 0.25s;
-}
-
-.profile-card:nth-child(3) {
-    animation-delay: 0.35s;
-}
-
-.profile-card:nth-child(4) {
-    animation-delay: 0.45s;
-}
-
 @keyframes card-reveal {
     from {
         opacity: 0;
-        transform: translateY(16px);
+        transform: translateY(14px);
     }
 
     to {
@@ -242,7 +405,6 @@
     }
 }
 
-/* Card header row */
 .profile-card__header {
     display: flex;
     align-items: center;
@@ -253,8 +415,18 @@
 }
 
 .profile-card__icon {
-    font-size: var(--text-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-primary-light);
     flex-shrink: 0;
+}
+
+.profile-card__icon svg {
+    stroke: var(--color-primary);
 }
 
 .profile-card__title {
@@ -265,24 +437,22 @@
 }
 
 /* ============================================================
-   5. INFO ROWS (view mode)
+   7. INFO ROWS
    ============================================================ */
 .profile-info-list {
     display: flex;
     flex-direction: column;
-    gap: 0;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--space-3) 0;
+    padding: var(--space-3) var(--space-2);
     border-bottom: var(--border-width) solid var(--color-border);
     gap: var(--space-4);
     transition: background-color var(--transition-fast);
     border-radius: var(--radius-sm);
-    padding-inline: var(--space-2);
 }
 
 .info-row:last-child {
@@ -309,7 +479,7 @@
 }
 
 /* ============================================================
-   6. EDIT FORM (edit mode)
+   8. EDIT FORM
    ============================================================ */
 .profile-edit-form {
     padding-top: var(--space-2);
@@ -319,68 +489,24 @@
 .edit-actions {
     display: flex;
     gap: var(--space-3);
-    margin-top: var(--space-6);
+    margin-top: var(--space-5);
 }
 
 /* ============================================================
-   7. STATS CARD
+   9. SECURITY CARD
    ============================================================ */
-.profile-card--stats {
-    background: linear-gradient(135deg, #fff 60%, var(--color-primary-light) 100%);
-    border-color: rgba(233, 30, 140, 0.18);
+.profile-card--security {
+    border-color: rgba(233, 30, 140, 0.15);
 }
 
-.stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-4);
+.profile-card--security .profile-card__icon {
+    background-color: #fff0f7;
 }
 
-.stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-1);
-    padding: var(--space-4);
-    border-radius: var(--radius-md);
-    background-color: rgba(255, 255, 255, 0.8);
-    border: var(--border-width) solid var(--color-border);
-    text-align: center;
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.stat-item:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-card);
-}
-
-.stat-item--wide {
-    grid-column: span 2;
-}
-
-.stat-item__value {
-    font-family: var(--font-heading);
-    font-size: var(--text-2xl);
-    color: var(--color-primary);
-    line-height: 1;
-}
-
-.stat-item__label {
-    font-size: var(--text-xs);
-    font-weight: var(--font-weight-bold);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--color-text-muted);
-}
-
-/* ============================================================
-   8. SECURITY CARD
-   ============================================================ */
 .security-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
+    gap: var(--space-3);
 }
 
 .security-item {
@@ -388,7 +514,7 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-3);
-    padding: var(--space-3);
+    padding: var(--space-3) var(--space-4);
     border-radius: var(--radius-md);
     border: var(--border-width) solid var(--color-border);
     background-color: var(--color-bg-alt);
@@ -408,8 +534,15 @@
 }
 
 .security-item__icon {
-    font-size: var(--text-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background-color: white;
     flex-shrink: 0;
+    border: var(--border-width) solid var(--color-border);
 }
 
 .security-item__title {
@@ -425,42 +558,7 @@
 }
 
 /* ============================================================
-   9. QUICK LINKS CARD
-   ============================================================ */
-.quick-links {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-}
-
-.quick-link {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-md);
-    font-size: var(--text-sm);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-text);
-    background-color: var(--color-bg-alt);
-    border: var(--border-width) solid var(--color-border);
-    text-decoration: none;
-    transition:
-        background-color var(--transition-fast),
-        color var(--transition-fast),
-        transform var(--transition-fast),
-        border-color var(--transition-fast);
-}
-
-.quick-link:hover {
-    background-color: var(--color-primary);
-    color: white;
-    border-color: var(--color-primary);
-    transform: translateX(4px);
-}
-
-/* ============================================================
-   10. TOAST NOTIFICATIONS
+   10. TOAST
    ============================================================ */
 .toast-container {
     position: fixed;
@@ -487,8 +585,6 @@
     pointer-events: all;
     min-width: 260px;
     max-width: 360px;
-
-    /* Entrance */
     animation: toast-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
@@ -527,8 +623,14 @@
     }
 }
 
+.toast__icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
 /* ============================================================
-   11. UTILITY OVERRIDES
+   11. UTILITY
    ============================================================ */
 .hidden {
     display: none !important;
@@ -537,22 +639,70 @@
 /* ============================================================
    12. RESPONSIVE
    ============================================================ */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
     .profile-grid {
         grid-template-columns: 1fr;
     }
+}
 
-    .profile-right-col {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .profile-card--security {
-        grid-column: span 2;
+@media (max-width: 1024px) {
+    .profile-main {
+        padding: var(--space-6) var(--space-6);
     }
 }
 
 @media (max-width: 768px) {
+    .profile-layout {
+        flex-direction: column;
+    }
+
+    .profile-sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+        border-right: none;
+        border-bottom: var(--border-width) solid var(--color-border);
+        padding: var(--space-5) var(--space-4);
+    }
+
+    .sidebar-avatar-block {
+        flex-direction: row;
+        align-items: center;
+        padding-bottom: var(--space-4);
+        gap: var(--space-4);
+    }
+
+    .sidebar-avatar-ring {
+        width: 52px;
+        height: 52px;
+        flex-shrink: 0;
+    }
+
+    .sidebar-avatar-name {
+        text-align: left;
+    }
+
+    .sidebar-nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+    }
+
+    .sidebar-nav__item {
+        flex: 1 1 auto;
+        justify-content: center;
+        min-width: 120px;
+        padding: var(--space-2) var(--space-3);
+    }
+
+    .sidebar-nav__divider {
+        display: none;
+    }
+
+    .profile-main {
+        padding: var(--space-5) var(--space-4);
+    }
+
     .profile-hero__content {
         flex-direction: column;
         align-items: center;
@@ -560,11 +710,11 @@
         padding: var(--space-8) var(--space-6);
     }
 
-    .profile-hero__phone {
+    .profile-hero__meta {
         justify-content: center;
     }
 
-    .profile-hero__meta {
+    .profile-hero__phone {
         justify-content: center;
     }
 
@@ -573,16 +723,8 @@
     }
 
     .avatar-ring {
-        width: 110px;
-        height: 110px;
-    }
-
-    .profile-right-col {
-        grid-template-columns: 1fr;
-    }
-
-    .profile-card--security {
-        grid-column: span 1;
+        width: 100px;
+        height: 100px;
     }
 
     .toast-container {
@@ -610,5 +752,10 @@
 
     .edit-actions {
         flex-direction: column;
+    }
+
+    .sidebar-nav__item {
+        min-width: 100px;
+        font-size: var(--text-xs);
     }
 }
