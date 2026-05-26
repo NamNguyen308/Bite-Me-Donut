@@ -267,6 +267,9 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <?php include __DIR__ . '/../layouts/footer.php'; ?>
+  <script src="../../public/assets/js/customer_profile.js"></script>
+
   <script src="../../public/assets/js/customer_orders.js"></script>
+
 </body>
 </html>

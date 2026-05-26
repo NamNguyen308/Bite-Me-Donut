@@ -200,7 +200,7 @@ $activePage = $activePage ?? '';
   <div class="site-header__inner">
 
     <!-- Ô 1: Logo + Tên -->
-    <a href="../../views/user/index.php"
+    <a href="../../views/user/home.php"
        class="site-header__cell site-header__logo"
        aria-label="Bite Me Donut — Trang chủ">
       <img
@@ -214,7 +214,7 @@ $activePage = $activePage ?? '';
 
     <!-- Ô 2: Home -->
     <div class="site-header__cell">
-      <a href="../../views/user/index.php"
+      <a href="../../views/user/home.php"
          class="site-header__link <?= $activePage === 'home' ? 'is-active' : '' ?>">
         Home
       </a>
@@ -248,7 +248,7 @@ $activePage = $activePage ?? '';
     <div class="site-header__cell site-header__actions">
 
       <!-- User -->
-      <a href="/login.html"
+      <a href="../../views/auth/login.php"
          class="site-header__icon-btn"
          aria-label="Tài khoản">
         <svg xmlns="http://www.w3.org/2000/svg"
