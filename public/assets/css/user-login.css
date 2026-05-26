@@ -1,0 +1,234 @@
+/* ============================================================
+   USER-LOGIN.CSS — Trang đăng nhập khách hàng
+   Dùng chung token với root.css (Bite-Me-Donut Design System).
+   Chỉ bổ sung style riêng cho trang login, KHÔNG ghi đè token gốc.
+   Yêu cầu: file này được nạp SAU root.css.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. KHUNG TRANG — căn giữa card đăng nhập
+   ------------------------------------------------------------ */
+.auth-page {
+    min-height: calc(100vh - var(--navbar-height));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-8) var(--space-4);
+    background-color: var(--color-bg);
+    /* Nền có chút chiều sâu bằng các đốm tròn nhẹ tông pink */
+    background-image:
+        radial-gradient(circle at 12% 18%, var(--color-primary-light) 0, transparent 38%),
+        radial-gradient(circle at 88% 82%, var(--color-bg-alt) 0, transparent 42%);
+}
+
+/* ------------------------------------------------------------
+   2. CARD ĐĂNG NHẬP
+   ------------------------------------------------------------ */
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    background-color: var(--color-bg-card);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-10) var(--space-8) var(--space-8);
+    animation: auth-card-in var(--transition-slow) ease both;
+}
+
+@keyframes auth-card-in {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- Header của card --- */
+.auth-card__head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-8);
+}
+
+.auth-card__logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-primary-light);
+    margin-bottom: var(--space-2);
+}
+
+.auth-card__logo svg {
+    width: 48px;
+    height: 48px;
+}
+
+.auth-card__title {
+    font-family: var(--font-heading);
+    font-size: var(--text-2xl);
+    color: var(--color-text);
+    line-height: var(--line-height-tight);
+}
+
+.auth-card__subtitle {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+/* --- Footer của card --- */
+.auth-card__foot {
+    margin-top: var(--space-6);
+}
+
+/* ------------------------------------------------------------
+   3. FORM
+   ------------------------------------------------------------ */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-form__row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: calc(var(--space-2) * -1);
+    margin-bottom: var(--space-6);
+}
+
+.auth-link {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-primary);
+    transition: color var(--transition-fast);
+}
+
+.auth-link:hover {
+    color: var(--color-primary-dark);
+    text-decoration: underline;
+}
+
+/* ------------------------------------------------------------
+   4. INPUT CÓ ICON + NÚT HIỆN/ẨN MẬT KHẨU
+   ------------------------------------------------------------ */
+.input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Icon bên trái input */
+.input-wrap__icon {
+    position: absolute;
+    left: var(--space-4);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    pointer-events: none;
+}
+
+/* Chừa chỗ cho icon trái */
+.form-input.has-icon {
+    padding-left: calc(var(--space-4) + 20px + var(--space-3));
+}
+
+/* Chừa chỗ cho nút toggle bên phải */
+.form-input.has-toggle {
+    padding-right: calc(var(--space-4) + 20px + var(--space-3));
+}
+
+/* Khi focus input -> đổi màu icon trái theo primary */
+.input-wrap:focus-within .input-wrap__icon {
+    color: var(--color-primary);
+}
+
+/* Nút hiện/ẩn mật khẩu */
+.input-wrap__toggle {
+    position: absolute;
+    right: var(--space-3);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background: none;
+    border-radius: var(--radius-full);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.input-wrap__toggle:hover {
+    color: var(--color-primary);
+    background-color: var(--color-primary-light);
+}
+
+.input-wrap__toggle:focus-visible {
+    outline: var(--border-width-md) solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   5. SPINNER TRONG NÚT (khi đang gửi request)
+   ------------------------------------------------------------ */
+.spinner--btn {
+    width: 18px;
+    height: 18px;
+    border-width: 2px;
+    /* Trên nền nút pink -> viền trắng cho dễ thấy */
+    border-color: rgba(255, 255, 255, 0.45);
+    border-top-color: var(--color-text-light);
+}
+
+/* Trạng thái đang xử lý: ẩn label, hiện spinner */
+.btn.is-loading {
+    pointer-events: none;
+    opacity: 0.85;
+}
+
+.btn.is-loading .btn-label {
+    visibility: hidden;
+}
+
+/* Nút khi loading hiển thị spinner ở giữa */
+.btn.is-loading .spinner--btn {
+    position: absolute;
+}
+
+#login-submit {
+    position: relative;
+    margin-top: var(--space-2);
+}
+
+/* ------------------------------------------------------------
+   6. TIỆN ÍCH NHỎ
+   ------------------------------------------------------------ */
+.hidden {
+    display: none !important;
+}
+
+/* ------------------------------------------------------------
+   7. RESPONSIVE
+   ------------------------------------------------------------ */
+@media (max-width: 480px) {
+    .auth-card {
+        padding: var(--space-8) var(--space-5) var(--space-6);
+        border-radius: var(--radius-lg);
+    }
+
+    .auth-card__title {
+        font-size: var(--text-xl);
+    }
+}
