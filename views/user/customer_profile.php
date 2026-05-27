@@ -101,6 +101,65 @@ function profile_read_json(): array
     return $data;
 }
 
+function profile_call_api(string $method, string $endpoint, string $token, array $payload = []): array
+{
+    $url = profile_api_base_url() . $endpoint;
+
+    $headers = [
+        'Accept: application/json',
+        'Authorization: Bearer ' . $token
+    ];
+
+    $options = [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 25,
+        CURLOPT_HTTPHEADER => $headers
+    ];
+
+    if ($method === 'POST') {
+        $headers[] = 'Content-Type: application/json';
+
+        $options[CURLOPT_POST] = true;
+        $options[CURLOPT_HTTPHEADER] = $headers;
+        $options[CURLOPT_POSTFIELDS] = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, $options);
+
+    $rawResponse = curl_exec($ch);
+    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    curl_close($ch);
+
+    $body = json_decode((string)$rawResponse, true);
+
+    return [
+        'http_code' => $httpCode,
+        'body' => is_array($body) ? $body : []
+    ];
+}
+
+function profile_extract_user(array $response): ?array
+{
+    if (isset($response['data']['user']) && is_array($response['data']['user'])) {
+        return $response['data']['user'];
+    }
+
+    if (isset($response['data']) && is_array($response['data']) && isset($response['data']['id'])) {
+        return $response['data'];
+    }
+
+    if (isset($response['user']) && is_array($response['user'])) {
+        return $response['user'];
+    }
+
+    if (isset($response['id'])) {
+        return $response;
+    }
+
+    return null;
+}
 function profile_forward_to_api(string $method, string $endpoint, string $token): void
 {
     $url = profile_api_base_url() . $endpoint;
@@ -170,10 +229,130 @@ function profile_forward_to_api(string $method, string $endpoint, string $token)
     exit;
 }
 
+function profile_db(): PDO
+{
+    static $pdo = null;
+
+    if ($pdo instanceof PDO) {
+        return $pdo;
+    }
+
+    $host = profile_env('DB_HOST', '127.0.0.1');
+    $port = profile_env('DB_PORT', '3306');
+    $name = profile_env('DB_NAME', 'ecommerce_security_platform');
+    $user = profile_env('DB_USER', 'root');
+    $pass = profile_env('DB_PASS', '');
+
+    $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
+
+    $pdo = new PDO($dsn, $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+
+    return $pdo;
+}
+
+function profile_get_current_user_by_token(string $plainToken): ?array
+{
+    $tokenHash = hash('sha256', $plainToken);
+
+    $stmt = profile_db()->prepare("
+        SELECT 
+            u.id,
+            u.name,
+            u.email,
+            u.phone,
+            u.role,
+            u.is_active,
+            u.created_at,
+            u.updated_at
+        FROM tokens t
+        INNER JOIN users u ON u.id = t.user_id
+        WHERE t.token_hash = :token_hash
+          AND t.revoked_at IS NULL
+          AND t.expires_at > NOW()
+        LIMIT 1
+    ");
+
+    $stmt->execute([
+        'token_hash' => $tokenHash
+    ]);
+
+    $user = $stmt->fetch();
+
+    if (!$user) {
+        return null;
+    }
+
+    if ((int) $user['is_active'] !== 1) {
+        return null;
+    }
+
+    return $user;
+}
+
+function profile_email_used_by_other_user(string $email, int $userId): bool
+{
+    $stmt = profile_db()->prepare("
+        SELECT id
+        FROM users
+        WHERE email = :email
+          AND id <> :id
+        LIMIT 1
+    ");
+
+    $stmt->execute([
+        'email' => $email,
+        'id' => $userId
+    ]);
+
+    return (bool) $stmt->fetch();
+}
+
+function profile_update_user(int $userId, string $name, string $email): array
+{
+    $stmt = profile_db()->prepare("
+        UPDATE users
+        SET name = :name,
+            email = :email,
+            updated_at = NOW()
+        WHERE id = :id
+        LIMIT 1
+    ");
+
+    $stmt->execute([
+        'name' => $name,
+        'email' => $email,
+        'id' => $userId
+    ]);
+
+    $stmt = profile_db()->prepare("
+        SELECT 
+            id,
+            name,
+            email,
+            phone,
+            role,
+            is_active,
+            created_at,
+            updated_at
+        FROM users
+        WHERE id = :id
+        LIMIT 1
+    ");
+
+    $stmt->execute([
+        'id' => $userId
+    ]);
+
+    return $stmt->fetch() ?: [];
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_GET['profile_ajax'] ?? '') === '1') {
     $input = profile_read_json();
 
-    $action = $input['action'] ?? '';
+    $action = trim((string)($input['action'] ?? ''));
     $token = trim((string)($input['access_token'] ?? ''));
 
     if ($token === '') {
@@ -186,6 +365,146 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_GET['profile_ajax'] ?? '') === '
 
     if ($action === 'me') {
         profile_forward_to_api('GET', '/users/me', $token);
+    }
+
+    if ($action === 'update_profile') {
+        $name = trim((string)($input['name'] ?? ''));
+        $email = trim((string)($input['email'] ?? ''));
+
+        if ($name === '' || mb_strlen($name) < 2) {
+            profile_json([
+                'success' => false,
+                'error_code' => 'VALIDATION_ERROR',
+                'message' => 'Full name is required'
+            ], 400);
+        }
+
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            profile_json([
+                'success' => false,
+                'error_code' => 'VALIDATION_ERROR',
+                'message' => 'Valid email is required'
+            ], 400);
+        }
+
+        $tokenHash = hash('sha256', $token);
+
+        $stmt = profile_db()->prepare("
+            SELECT 
+                u.id,
+                u.name,
+                u.email,
+                u.phone,
+                u.role,
+                u.is_active,
+                u.created_at,
+                u.updated_at
+            FROM tokens t
+            INNER JOIN users u ON u.id = t.user_id
+            WHERE t.token_hash = :token_hash
+              AND t.revoked_at IS NULL
+              AND t.expires_at > NOW()
+            LIMIT 1
+        ");
+
+        $stmt->execute([
+            'token_hash' => $tokenHash
+        ]);
+
+        $currentUser = $stmt->fetch();
+
+        if (!$currentUser) {
+            profile_json([
+                'success' => false,
+                'error_code' => 'UNAUTHENTICATED',
+                'message' => 'Your login session has expired. Please log in again.'
+            ], 401);
+        }
+
+        if ((int)$currentUser['is_active'] !== 1) {
+            profile_json([
+                'success' => false,
+                'error_code' => 'ACCOUNT_INACTIVE',
+                'message' => 'This account is inactive'
+            ], 403);
+        }
+
+        $userId = (int)$currentUser['id'];
+
+        $stmt = profile_db()->prepare("
+            SELECT id
+            FROM users
+            WHERE email = :email
+              AND id <> :id
+            LIMIT 1
+        ");
+
+        $stmt->execute([
+            'email' => $email,
+            'id' => $userId
+        ]);
+
+        $emailOwner = $stmt->fetch();
+
+        if ($emailOwner) {
+            profile_json([
+                'success' => false,
+                'error_code' => 'EMAIL_ALREADY_EXISTS',
+                'message' => 'This email is already used by another account'
+            ], 409);
+        }
+
+        try {
+            $stmt = profile_db()->prepare("
+                UPDATE users
+                SET name = :name,
+                    email = :email,
+                    updated_at = NOW()
+                WHERE id = :id
+                LIMIT 1
+            ");
+
+            $stmt->execute([
+                'name' => $name,
+                'email' => $email,
+                'id' => $userId
+            ]);
+
+            $stmt = profile_db()->prepare("
+                SELECT 
+                    id,
+                    name,
+                    email,
+                    phone,
+                    role,
+                    is_active,
+                    created_at,
+                    updated_at
+                FROM users
+                WHERE id = :id
+                LIMIT 1
+            ");
+
+            $stmt->execute([
+                'id' => $userId
+            ]);
+
+            $updatedUser = $stmt->fetch();
+
+            profile_json([
+                'success' => true,
+                'message' => 'PROFILE_UPDATED',
+                'data' => [
+                    'user' => $updatedUser
+                ]
+            ]);
+        } catch (Throwable $e) {
+            profile_json([
+                'success' => false,
+                'error_code' => 'PROFILE_UPDATE_FAILED',
+                'message' => 'Cannot update profile'
+            ], 500);
+        }
     }
 
     if ($action === 'logout') {
@@ -401,30 +720,63 @@ $changePasswordUrl = $appBasePath . '/views/auth/change_password.php';
             </div>
 
             <!-- Edit mode -->
-            <div class="profile-edit-form hidden" id="editForm">
-              <div class="form-group">
-                <label class="form-label" for="editName">Full name</label>
-                <input type="text" class="form-input" id="editName" placeholder="Enter your full name" />
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="editEmail">Email</label>
-                <input type="email" class="form-input" id="editEmail" placeholder="Enter your email" />
-                <span class="form-hint">Email is used to login and receive notifications</span>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Phone Number</label>
-                <input type="text" class="form-input" id="editPhone" disabled />
-                <span class="form-hint">Phone Number cannot be changed</span>
-              </div>
-              <div class="edit-actions">
-                <button class="btn btn--primary" id="saveBtn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                  Save Changes
-                </button>
-                <button class="btn btn--ghost" id="cancelEditBtn">Cancel</button>
-              </div>
-              <div id="editAlert" class="hidden" style="margin-top: var(--space-4);"></div>
-            </div>
+<form class="profile-edit-form hidden" id="editForm" novalidate>
+  <div class="form-group">
+    <label class="form-label" for="editName">Full name</label>
+    <input
+      type="text"
+      class="form-input"
+      id="editName"
+      name="name"
+      placeholder="Enter your full name"
+      required
+    />
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="editEmail">Email</label>
+    <input
+      type="email"
+      class="form-input"
+      id="editEmail"
+      name="email"
+      placeholder="Enter your email"
+      required
+    />
+    <span class="form-hint">Email is used to login and receive notifications</span>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="editPhone">Phone Number</label>
+    <input
+      type="text"
+      class="form-input"
+      id="editPhone"
+      name="phone"
+      readonly
+    />
+    <span class="form-hint">Phone Number cannot be changed</span>
+  </div>
+
+  <div class="edit-actions">
+    <button class="btn btn--primary" id="saveProfileBtn" type="submit">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15"
+           viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+        <polyline points="17 21 17 13 7 13 7 21"/>
+        <polyline points="7 3 7 8 15 8"/>
+      </svg>
+      Save Changes
+    </button>
+
+    <button class="btn btn--ghost" id="cancelEditBtn" type="button">
+      Cancel
+    </button>
+  </div>
+
+  <div id="editAlert" class="hidden" style="margin-top: var(--space-4);"></div>
+</form>
           </section>
 
           <!-- Security card -->
