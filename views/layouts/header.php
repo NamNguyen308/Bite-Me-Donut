@@ -1,4 +1,7 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 /**
  * views/layouts/header.php
  *
@@ -248,7 +251,12 @@ $activePage = $activePage ?? '';
     <div class="site-header__cell site-header__actions">
 
       <!-- User -->
-      <a href="../../views/auth/user-login.php"
+      <?php
+        $accountLink = !empty($_SESSION['access_token'])
+            ? '../../views/user/customer_profile.php'
+            : '../../views/auth/user-login.php';
+      ?>
+      <a href="<?= htmlspecialchars($accountLink) ?>"
          class="site-header__icon-btn"
          aria-label="Tài khoản">
         <svg xmlns="http://www.w3.org/2000/svg"
@@ -265,7 +273,12 @@ $activePage = $activePage ?? '';
       </a>
 
       <!-- Cart -->
-      <a href="../../views/user/cart.php"
+      <?php
+        $cartLink = !empty($_SESSION['access_token'])
+            ? '../../views/user/cart.php'
+            : '../../views/auth/user-login.php';
+      ?>
+      <a href="<?= htmlspecialchars($cartLink) ?>"
          class="site-header__icon-btn"
          aria-label="Giỏ hàng">
         <svg xmlns="http://www.w3.org/2000/svg"

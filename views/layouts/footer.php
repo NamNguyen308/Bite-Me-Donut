@@ -209,14 +209,16 @@ $activePage = $activePage ?? '';
       <a href="../../views/user/index.php"    class="site-footer__link">Home</a>
       <a href="../../views/user/products.php" class="site-footer__link">Products</a>
       <a href="../../views/user/policies.php" class="site-footer__link">Policies</a>
+      <a href="../../views/user/contact.php" class="site-footer__link">Contact</a>
     </div>
 
     <!-- Col 3: Account -->
     <div class="site-footer__col">
-      <p class="site-footer__col-title">Account</p>
-      <a href="../../views/user/customer_profile.php"  class="site-footer__link">My Profile</a>
-      <a href="../../views/user/customer_orders.php" class="site-footer__link">My Orders</a>
-      <a href="../../views/user/cart.php"   class="site-footer__link">My Cart</a>
+      <p class="site-footer__col-title">Follow us</p>
+      <a href="https://facebook.com"  class="site-footer__link">Facebook</a>
+      <a href="https://instagram.com" class="site-footer__link">Instagram</a>
+      <a href="https://tiktok.com"   class="site-footer__link">TikTok</a>
+      <a href="https://youtube.com"   class="site-footer__link">Youtube</a>
     </div>
 
     <!-- Col 4: Contact -->

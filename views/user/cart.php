@@ -131,7 +131,7 @@ function formatPrice(float $price): string {
         <p class="cart-empty__desc">
             Oops! It looks like your cart is still empty. <br>Let's explore our yummy menu together!
         </p>
-        <a href="/products.php" class="btn btn--primary btn--lg">
+        <a href="../../views/user/products.php" class="btn btn--primary btn--lg">
             Shop Now
         </a>
     </div>
@@ -143,7 +143,7 @@ function formatPrice(float $price): string {
 
     <!-- Top bar: Continue Shopping -->
     <div class="cart-page__topbar">
-        <a href="/products.php" class="cart-page__continue">Continue Shopping</a>
+        <a href="../../views/user/products.php" class="cart-page__continue">Continue Shopping</a>
     </div>
 
     <div class="cart-layout">
@@ -230,7 +230,7 @@ function formatPrice(float $price): string {
             <!-- Nút Clear Cart -->
             <div class="cart-actions">
                 <button type="button" class="cart-actions__clear" id="btnClearCart">
-                    🗑 Clear Cart
+                    Clear Cart
                 </button>
             </div>
         </div><!-- /LEFT -->
@@ -259,7 +259,7 @@ function formatPrice(float $price): string {
                 <hr class="cart-summary__divider" />
 
                 <!-- Promo code toggle -->
-                <div>
+                <!-- <div>
                     <button type="button" class="cart-summary__promo" id="btnTogglePromo">
                         I have a promo code
                     </button>
@@ -274,7 +274,7 @@ function formatPrice(float $price): string {
                             Áp dụng
                         </button>
                     </div>
-                </div>
+                </div> -->
 
                 <hr class="cart-summary__divider" />
 
