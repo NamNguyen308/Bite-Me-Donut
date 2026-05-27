@@ -1,10 +1,215 @@
 <?php
-/**
- * Profile Page
- * Requires: user must be logged in (access_token in localStorage handled by JS)
- * API: GET /api/users/me (Authorization: Bearer <token>)
- */
+declare(strict_types=1);
+
+$activePage = 'profile';
+
+function profile_project_root(): string
+{
+    return dirname(__DIR__, 2);
+}
+
+function profile_load_env(): array
+{
+    $envPath = profile_project_root() . DIRECTORY_SEPARATOR . '.env';
+    $env = [];
+
+    if (!is_file($envPath)) {
+        return $env;
+    }
+
+    $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+    foreach ($lines as $line) {
+        $line = trim($line);
+
+        if ($line === '' || $line[0] === '#' || !str_contains($line, '=')) {
+            continue;
+        }
+
+        [$key, $value] = explode('=', $line, 2);
+        $env[trim($key)] = trim(trim($value), "\"'");
+    }
+
+    return $env;
+}
+
+function profile_env(string $key, ?string $default = null): ?string
+{
+    static $env = null;
+
+    if ($env === null) {
+        $env = profile_load_env();
+    }
+
+    return $env[$key] ?? $default;
+}
+
+function profile_app_base_path(): string
+{
+    $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $basePath = preg_replace('#/(views|public)/.*$#', '', $scriptName);
+
+    if ($basePath === null || $basePath === $scriptName) {
+        return '';
+    }
+
+    return rtrim($basePath, '/');
+}
+
+function profile_scheme(): string
+{
+    $https = $_SERVER['HTTPS'] ?? '';
+
+    return ($https !== '' && $https !== 'off') ? 'https' : 'http';
+}
+
+function profile_api_base_url(): string
+{
+    $appUrl = profile_env('APP_URL', '');
+
+    if ($appUrl !== null && trim($appUrl) !== '') {
+        return rtrim(trim($appUrl), '/') . '/api';
+    }
+
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+    return profile_scheme() . '://' . $host . profile_app_base_path() . '/api';
+}
+
+function profile_json(array $payload, int $statusCode = 200): void
+{
+    http_response_code($statusCode);
+    header('Content-Type: application/json; charset=utf-8');
+
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+function profile_read_json(): array
+{
+    $raw = file_get_contents('php://input');
+    $data = json_decode($raw ?: '', true);
+
+    if (!is_array($data)) {
+        profile_json([
+            'success' => false,
+            'error_code' => 'INVALID_JSON',
+            'message' => 'Invalid JSON request body'
+        ], 400);
+    }
+
+    return $data;
+}
+
+function profile_forward_to_api(string $method, string $endpoint, string $token): void
+{
+    $url = profile_api_base_url() . $endpoint;
+
+    $headers = [
+        'Accept: application/json',
+        'Authorization: Bearer ' . $token
+    ];
+
+    $options = [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 25,
+        CURLOPT_HTTPHEADER => $headers
+    ];
+
+    if ($method === 'POST') {
+        $headers[] = 'Content-Type: application/json';
+
+        $options[CURLOPT_POST] = true;
+        $options[CURLOPT_HTTPHEADER] = $headers;
+        $options[CURLOPT_POSTFIELDS] = '{}';
+    }
+
+    $ch = curl_init($url);
+
+    if ($ch === false) {
+        profile_json([
+            'success' => false,
+            'error_code' => 'CURL_INIT_FAILED',
+            'message' => 'Cannot initialize cURL'
+        ], 500);
+    }
+
+    curl_setopt_array($ch, $options);
+
+    $rawResponse = curl_exec($ch);
+    $curlError = curl_error($ch);
+    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    curl_close($ch);
+
+    if ($rawResponse === false) {
+        profile_json([
+            'success' => false,
+            'error_code' => 'API_PROXY_CURL_ERROR',
+            'message' => $curlError !== '' ? $curlError : 'Cannot call backend API',
+            'api_url' => $url
+        ], 502);
+    }
+
+    $decoded = json_decode($rawResponse, true);
+
+    if (!is_array($decoded)) {
+        profile_json([
+            'success' => false,
+            'error_code' => 'API_PROXY_INVALID_JSON',
+            'message' => 'Backend API did not return JSON',
+            'api_url' => $url,
+            'raw_response' => $rawResponse
+        ], 502);
+    }
+
+    http_response_code($httpCode > 0 ? $httpCode : 200);
+    header('Content-Type: application/json; charset=utf-8');
+
+    echo $rawResponse;
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_GET['profile_ajax'] ?? '') === '1') {
+    $input = profile_read_json();
+
+    $action = $input['action'] ?? '';
+    $token = trim((string)($input['access_token'] ?? ''));
+
+    if ($token === '') {
+        profile_json([
+            'success' => false,
+            'error_code' => 'UNAUTHENTICATED',
+            'message' => 'Access token is required'
+        ], 401);
+    }
+
+    if ($action === 'me') {
+        profile_forward_to_api('GET', '/users/me', $token);
+    }
+
+    if ($action === 'logout') {
+        profile_forward_to_api('POST', '/auth/logout', $token);
+    }
+
+    profile_json([
+        'success' => false,
+        'error_code' => 'INVALID_ACTION',
+        'message' => 'Invalid profile action'
+    ], 400);
+}
+
+$appBasePath = profile_app_base_path();
+$publicBasePath = $appBasePath . '/public';
+
+$profileProxyUrl = ($_SERVER['SCRIPT_NAME'] ?? '') . '?profile_ajax=1';
+$loginUrl = $appBasePath . '/views/auth/user-login.php';
+$homeUrl = $appBasePath . '/views/user/home.php';
+$ordersUrl = $appBasePath . '/views/user/customer_orders.php';
+$changePasswordUrl = $appBasePath . '/views/auth/change_password.php';
 ?>
+
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -14,8 +219,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../../public/assets/css/root.css" />
-  <link rel="stylesheet" href="../../public/assets/css/customer_profile.css" />
+  <link rel="stylesheet" href="<?= htmlspecialchars($publicBasePath) ?>/assets/css/root.css" />
+  <link rel="stylesheet" href="<?= htmlspecialchars($publicBasePath) ?>/assets/css/customer_profile.css" />
 </head>
 <body>
 
@@ -33,12 +238,12 @@
       <div class="sidebar-avatar-block">
         <div class="sidebar-avatar-ring">
           <img
-            src="../../public/assets/img/user.jpg"
-            alt="Ảnh đại diện"
-            class="sidebar-avatar-img"
-            id="sidebarAvatar"
-            onerror="this.src='../../public/assets/img/user-default.svg'"
-          />
+  src="<?= htmlspecialchars($publicBasePath) ?>/assets/img/user.jpg"
+  alt="Ảnh đại diện"
+  class="sidebar-avatar-img"
+  id="sidebarAvatar"
+  onerror="this.src='<?= htmlspecialchars($publicBasePath) ?>/assets/img/user-default.svg'"
+/>
         </div>
         <p class="sidebar-avatar-name" id="sidebarName">—</p>
         <span class="badge badge--primary sidebar-role" id="sidebarRole">Customer</span>
@@ -47,7 +252,7 @@
       <nav class="sidebar-nav">
 
         <!-- My Profile -->
-        <a href="../../views/user/customer_profile.php" class="sidebar-nav__item active" data-page="profile">
+        <a href="<?= htmlspecialchars($appBasePath) ?>/views/user/customer_profile.php" class="sidebar-nav__item active" data-page="profile">
           <span class="sidebar-nav__icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </span>
@@ -55,7 +260,9 @@
         </a>
 
         <!-- My Orders -->
-        <a href="../../views/user/customer_orders.php" class="sidebar-nav__item" data-page="orders">
+        <a href="<?= htmlspecialchars($ordersUrl) ?>"
+   class="sidebar-nav__item"
+   data-page="orders">
           <span class="sidebar-nav__icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
           </span>
@@ -63,7 +270,9 @@
         </a>
 
         <!-- Change Password -->
-        <a href="../../views/auth/change_password.php" class="sidebar-nav__item" data-page="change-password">
+        <a href="<?= htmlspecialchars($changePasswordUrl) ?>"
+   class="sidebar-nav__item"
+   data-page="change-password">
           <span class="sidebar-nav__icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           </span>
@@ -96,7 +305,11 @@
         <div class="alert alert--danger" id="profileErrorMsg">
           Cannot load profile. Please log in again.
         </div>
-        <a href="../../views/auth/login.php" class="btn btn--primary" style="margin-top: var(--space-4);">Log in</a>
+        <a href="<?= htmlspecialchars($loginUrl) ?>"
+   class="btn btn--primary"
+   style="margin-top: var(--space-4);">
+  Log in
+</a>
       </div>
 
       <!-- Profile Content -->
@@ -121,12 +334,12 @@
             <div class="avatar-wrapper">
               <div class="avatar-ring">
                 <img
-                  src="../../public/assets/img/user.jpg"
-                  alt="Ảnh đại diện"
-                  class="avatar-img"
-                  id="avatarImg"
-                  onerror="this.src='../../public/assets/img/user-default.svg'"
-                />
+  src="<?= htmlspecialchars($publicBasePath) ?>/assets/img/user.jpg"
+  alt="Ảnh đại diện"
+  class="avatar-img"
+  id="avatarImg"
+  onerror="this.src='<?= htmlspecialchars($publicBasePath) ?>/assets/img/user-default.svg'"
+/>
               </div>
               <div class="avatar-status" title="Đang hoạt động"></div>
             </div>
@@ -249,7 +462,10 @@
                     <p class="security-item__desc">Update password regularly</p>
                   </div>
                 </div>
-                <a href="/change-password.php" class="btn btn--outline btn--sm">Change</a>
+                <a href="<?= htmlspecialchars($changePasswordUrl) ?>"
+   class="btn btn--outline btn--sm">
+  Change
+</a>
               </div>
 
               <!-- Session -->
@@ -307,6 +523,16 @@
   <!-- TOAST -->
   <div class="toast-container" id="toastContainer"></div>
   <?php include __DIR__ . '/../layouts/footer.php'; ?>
-  <script src="../../public/assets/js/customer_profile.js"></script>
+  
+
+  <script>
+  window.CUSTOMER_PROFILE_CONFIG = {
+    profileProxyUrl: <?= json_encode($profileProxyUrl) ?>,
+    loginUrl: <?= json_encode($loginUrl) ?>,
+    homeUrl: <?= json_encode($homeUrl) ?>
+  };
+</script>
+
+<script src="<?= htmlspecialchars($publicBasePath) ?>/assets/js/customer_profile.js?v=<?= time() ?>" defer></script>  
 </body>
 </html>

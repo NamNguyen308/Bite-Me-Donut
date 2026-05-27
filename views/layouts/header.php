@@ -1,24 +1,31 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-/**
- * views/layouts/header.php
- *
- * Cách dùng — include vào bất kỳ trang nào:
- *   <?php include __DIR__ . '/../layouts/header.php'; ?>
- *   hoặc nếu gọi từ public/:
- *   <?php include __DIR__ . '/../../views/layouts/header.php'; ?>
- *
- * Để highlight trang hiện tại, định nghĩa $activePage trước khi include:
- *   <?php $activePage = 'products'; include ...; ?>
- *   Các giá trị hợp lệ: 'home' | 'products' | 'contact' | 'policies'
- *
- * Hiển thị badge giỏ hàng (tuỳ chọn):
- *   <?php $cartCount = 3; include ...; ?>
- */
-
 $activePage = $activePage ?? '';
+$cartCount = $cartCount ?? 0;
+
+if (!function_exists('layout_app_base_path')) {
+    function layout_app_base_path(): string
+    {
+        $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+        $basePath = preg_replace('#/(views|public)/.*$#', '', $scriptName);
+
+        if ($basePath === null || $basePath === $scriptName) {
+            return '';
+        }
+
+        return rtrim($basePath, '/');
+    }
+}
+
+$appBasePath = layout_app_base_path();
+
+$homeUrl = $appBasePath . '/views/user/home.php';
+$productsUrl = $appBasePath . '/views/user/products.php';
+$contactUrl = $appBasePath . '/views/user/contact.php';
+$policiesUrl = $appBasePath . '/views/user/policies.php';
+$profileUrl = $appBasePath . '/views/user/customer_profile.php';
+$cartUrl = $appBasePath . '/views/user/cart.php';
+$loginUrl = $appBasePath . '/views/auth/user-login.php';
+$logoUrl = $appBasePath . '/public/assets/img/logo.png';
 ?>
 <link rel="stylesheet" href="../../public/assets/css/root.css">
 
@@ -203,108 +210,141 @@ $activePage = $activePage ?? '';
   <div class="site-header__inner">
 
     <!-- Ô 1: Logo + Tên -->
-    <a href="../../views/user/home.php"
-       class="site-header__cell site-header__logo"
-       aria-label="Bite Me Donut — Trang chủ">
-      <img
-        src="../../public/assets/img/logo.png"
-        alt="Logo Bite Me Donut"
-        width="40"
-        height="40"
-      >
-      <span class="site-header__brand-name">Bite Me<br>Donut</span>
-    </a>
+    <a href="<?= htmlspecialchars($homeUrl) ?>"
+   class="site-header__cell site-header__logo"
+   aria-label="Bite Me Donut — Trang chủ">
+  <img
+    src="<?= htmlspecialchars($logoUrl) ?>"
+    alt="Logo Bite Me Donut"
+    width="40"
+    height="40"
+  >
+  <span class="site-header__brand-name">Bite Me<br>Donut</span>
+</a>
 
-    <!-- Ô 2: Home -->
-    <div class="site-header__cell">
-      <a href="../../views/user/home.php"
-         class="site-header__link <?= $activePage === 'home' ? 'is-active' : '' ?>">
-        Home
-      </a>
-    </div>
+<div class="site-header__cell">
+  <a href="<?= htmlspecialchars($homeUrl) ?>"
+     class="site-header__link <?= $activePage === 'home' ? 'is-active' : '' ?>">
+    Home
+  </a>
+</div>
 
-    <!-- Ô 3: Products -->
-    <div class="site-header__cell">
-      <a href="../../views/user/products.php"
-         class="site-header__link <?= $activePage === 'products' ? 'is-active' : '' ?>">
-        Products
-      </a>
-    </div>
+<div class="site-header__cell">
+  <a href="<?= htmlspecialchars($productsUrl) ?>"
+     class="site-header__link <?= $activePage === 'products' ? 'is-active' : '' ?>">
+    Products
+  </a>
+</div>
 
-    <!-- Ô 4: Contact -->
-    <div class="site-header__cell">
-      <a href="../../views/user/contact.php"
-         class="site-header__link <?= $activePage === 'contact' ? 'is-active' : '' ?>">
-        Contact
-      </a>
-    </div>
+<div class="site-header__cell">
+  <a href="<?= htmlspecialchars($contactUrl) ?>"
+     class="site-header__link <?= $activePage === 'contact' ? 'is-active' : '' ?>">
+    Contact
+  </a>
+</div>
 
-    <!-- Ô 5: Policies -->
-    <div class="site-header__cell">
-      <a href="../../views/user/policies.php"
-         class="site-header__link <?= $activePage === 'policies' ? 'is-active' : '' ?>">
-        Policies
-      </a>
-    </div>
+<div class="site-header__cell">
+  <a href="<?= htmlspecialchars($policiesUrl) ?>"
+     class="site-header__link <?= $activePage === 'policies' ? 'is-active' : '' ?>">
+    Policies
+  </a>
+</div>
 
-    <!-- Ô 6: User + Cart (cùng 1 ô) -->
     <div class="site-header__cell site-header__actions">
 
-      <!-- User -->
-      <?php
-        $accountLink = !empty($_SESSION['access_token'])
-            ? '../../views/user/customer_profile.php'
-            : '../../views/auth/user-login.php';
-      ?>
-      <a href="<?= htmlspecialchars($accountLink) ?>"
-         class="site-header__icon-btn"
-         aria-label="Tài khoản">
-        <svg xmlns="http://www.w3.org/2000/svg"
-             viewBox="0 0 24 24"
-             fill="none"
-             stroke="currentColor"
-             stroke-width="1.8"
-             stroke-linecap="round"
-             stroke-linejoin="round"
-             aria-hidden="true">
-          <circle cx="12" cy="8" r="4"/>
-          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-        </svg>
-      </a>
+  <a
+    id="nav-account-link"
+    href="<?= htmlspecialchars($loginUrl) ?>"
+    data-login-url="<?= htmlspecialchars($loginUrl) ?>"
+    data-profile-url="<?= htmlspecialchars($profileUrl) ?>"
+    class="site-header__icon-btn"
+    aria-label="Tài khoản"
+    title="Đăng nhập"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg"
+         viewBox="0 0 24 24"
+         fill="none"
+         stroke="currentColor"
+         stroke-width="1.8"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         aria-hidden="true">
+      <circle cx="12" cy="8" r="4"/>
+      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+    </svg>
+  </a>
 
-      <!-- Cart -->
-      <?php
-        $cartLink = !empty($_SESSION['access_token'])
-            ? '../../views/user/cart.php'
-            : '../../views/auth/user-login.php';
-      ?>
-      <a href="<?= htmlspecialchars($cartLink) ?>"
-         class="site-header__icon-btn"
-         aria-label="Giỏ hàng">
-        <svg xmlns="http://www.w3.org/2000/svg"
-             viewBox="0 0 24 24"
-             fill="none"
-             stroke="currentColor"
-             stroke-width="1.8"
-             stroke-linecap="round"
-             stroke-linejoin="round"
-             aria-hidden="true">
-          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-          <line x1="3" y1="6" x2="21" y2="6"/>
-          <path d="M16 10a4 4 0 0 1-8 0"/>
-        </svg>
-        <?php if (!empty($cartCount) && $cartCount > 0): ?>
-          <span class="site-header__cart-badge"
-                aria-label="<?= (int)$cartCount ?> sản phẩm trong giỏ">
-            <?= min((int)$cartCount, 99) ?>
-          </span>
-        <?php endif; ?>
-      </a>
+  <a
+    id="nav-cart-link"
+    href="<?= htmlspecialchars($loginUrl) ?>"
+    data-login-url="<?= htmlspecialchars($loginUrl) ?>"
+    data-cart-url="<?= htmlspecialchars($cartUrl) ?>"
+    class="site-header__icon-btn"
+    aria-label="Giỏ hàng"
+    title="Giỏ hàng"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg"
+         viewBox="0 0 24 24"
+         fill="none"
+         stroke="currentColor"
+         stroke-width="1.8"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         aria-hidden="true">
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <path d="M16 10a4 4 0 0 1-8 0"/>
+    </svg>
 
-    </div><!-- /Ô 6 -->
+    <?php if (!empty($cartCount) && $cartCount > 0): ?>
+      <span class="site-header__cart-badge"
+            aria-label="<?= (int)$cartCount ?> sản phẩm trong giỏ">
+        <?= min((int)$cartCount, 99) ?>
+      </span>
+    <?php endif; ?>
+  </a>
 
-  </div><!-- /.site-header__inner -->
+</div>
 </header>
 
 <!-- Đẩy nội dung xuống đúng chiều cao header fixed -->
 <div class="header-offset" aria-hidden="true"></div>
+
+<script>
+(function () {
+  const token =
+    localStorage.getItem('access_token') ||
+    localStorage.getItem('auth_token');
+
+  const accountLink = document.getElementById('nav-account-link');
+  const cartLink = document.getElementById('nav-cart-link');
+
+  if (accountLink) {
+    const loginUrl = accountLink.dataset.loginUrl;
+    const profileUrl = accountLink.dataset.profileUrl;
+
+    if (token) {
+      accountLink.href = profileUrl;
+      accountLink.title = 'Tài khoản của tôi';
+      accountLink.dataset.authState = 'authenticated';
+    } else {
+      accountLink.href = loginUrl;
+      accountLink.title = 'Đăng nhập';
+      accountLink.dataset.authState = 'guest';
+    }
+  }
+
+  if (cartLink) {
+    const loginUrl = cartLink.dataset.loginUrl;
+    const cartUrl = cartLink.dataset.cartUrl;
+
+    if (token) {
+      cartLink.href = cartUrl;
+      cartLink.dataset.authState = 'authenticated';
+    } else {
+      cartLink.href = loginUrl;
+      cartLink.dataset.authState = 'guest';
+    }
+  }
+})();
+</script>
