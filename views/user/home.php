@@ -1,97 +1,521 @@
- <?php
-// views/user/home.php
+<?php
+// home.php — Bite-Me-Donut Homepage
+
+// -------------------------------------------------------
+// Database: fetch hot products (is_active = 1, limit 8)
+// Adjust the PDO connection to match your config/Database class
+// -------------------------------------------------------
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bite Me Donut - Sweet & Fresh Every Day</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;500;600;700;800&display=swap');
-        :root { --color-bg: #fef9e7; --color-bg-alt: #fdf3c8; --color-bg-card: #ffffff; --color-primary: #e91e8c; --color-primary-dark: #c01575; --color-primary-light: #fce4f3; --color-text: #2b1a0e; --color-text-muted: #7a6352; --color-border: #e8dbc8; --color-danger: #e53935; --color-success: #43a047; --color-warning: #fb8c00; --font-heading: 'Fredoka One', cursive; --font-body: 'Nunito', sans-serif; --text-xs: 0.75rem; --text-sm: 0.875rem; --text-base: 1rem; --text-md: 1.125rem; --text-lg: 1.25rem; --text-xl: 1.5rem; --text-2xl: 2rem; --text-3xl: 2.5rem; --font-weight-bold: 700; --font-weight-black: 800; --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem; --space-6: 1.5rem; --space-8: 2rem; --space-16: 4rem; --radius-sm: 4px; --radius-md: 8px; --radius-full: 9999px; --border-width: 1px; --shadow-md: 0 4px 16px rgba(43,26,14,0.12); --shadow-lg: 0 8px 32px rgba(43,26,14,0.15); --transition-fast: 150ms ease; --container-max: 1200px; --container-md: 900px; --navbar-height: 68px; }
-        *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { font-size: 16px; scroll-behavior: smooth; }
-        body { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text); background-color: var(--color-bg); line-height: 1.6; min-height: 100vh; }
-        a { color: var(--color-primary); text-decoration: none; transition: color var(--transition-fast); } a:hover { color: var(--color-primary-dark); }
-        img { max-width: 100%; display: block; }
-        h1, h2, h3, .page-title { font-family: var(--font-heading); font-weight: 400; line-height: 1.2; }
-        .page-title { font-size: var(--text-3xl); text-align: center; margin-bottom: var(--space-8); }
-        .text-center { text-align: center; } .text-right { text-align: right; } .text-danger { color: var(--color-danger); } .text-primary { color: var(--color-primary); } .text-muted { color: var(--color-text-muted); }
-        .font-bold { font-weight: var(--font-weight-bold); } .font-black { font-weight: var(--font-weight-black); }
-        .text-xs { font-size: var(--text-xs); } .text-sm { font-size: var(--text-sm); } .text-lg { font-size: var(--text-lg); } .text-xl { font-size: var(--text-xl); }
-        .container { max-width: var(--container-max); margin: 0 auto; padding: 0 var(--space-6); } .container--md { max-width: var(--container-md); }
-        .section { padding: var(--space-16) 0; }
-        .flex { display: flex; } .flex-col { display: flex; flex-direction: column; } .items-center { align-items: center; } .justify-between { justify-content: space-between; } .justify-center { justify-content: center; } .gap-2 { gap: var(--space-2); } .gap-4 { gap: var(--space-4); }
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-6); }
-        .btn { display: inline-flex; align-items: center; justify-content: center; font-weight: var(--font-weight-bold); text-transform: uppercase; padding: var(--space-3) var(--space-6); border-radius: var(--radius-sm); cursor: pointer; border: 2px solid transparent; transition: all var(--transition-fast); }
-        .btn--primary { background: var(--color-primary); color: white; border-color: var(--color-primary); } .btn--primary:hover { background: var(--color-primary-dark); box-shadow: var(--shadow-md); }
-        .btn--outline { background: transparent; color: var(--color-primary); border-color: var(--color-primary); }
-        .btn--danger { background: var(--color-danger); color: white; border-color: var(--color-danger); font-size: var(--text-xs); padding: var(--space-2) var(--space-4); }
-        .btn--sm { font-size: var(--text-xs); padding: var(--space-2) var(--space-4); } .btn--lg { padding: var(--space-4) var(--space-8); }
-        .card { background: var(--color-bg-card); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-6); transition: transform var(--transition-fast), box-shadow var(--transition-fast); } .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
-        .badge { padding: var(--space-1) var(--space-3); font-size: var(--text-xs); font-weight: var(--font-weight-bold); text-transform: uppercase; border-radius: var(--radius-full); display: inline-block; } .badge--neutral { background: var(--color-border); color: var(--color-text-muted); }
-        .divider { border-top: var(--border-width) solid var(--color-border); margin: var(--space-4) 0; }
-        .w-full { width: 100%; } .mb-4 { margin-bottom: var(--space-4); } .mb-8 { margin-bottom: var(--space-8); } .mt-8 { margin-top: var(--space-8); }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bite-Me Donuts — Baked Fresh, Delivered Sweet</title>
+  <meta name="description" content="Handcrafted donuts made fresh every day. Order online and get them delivered to your door or pick up in-store." />
+  <link rel="stylesheet" href="../../public/assets/css/root.css" />
+  <link rel="stylesheet" href="../../public/assets/css/home.css" />
 </head>
 <body>
 
+  <?php include __DIR__ . '/../layouts/header.php'; ?>
 
-<?php include __DIR__ . '/../layouts/header.php'; ?>
+  <!-- ======================================================
+       1. HERO
+  ====================================================== -->
+  <section class="home-hero" aria-label="Hero banner">
 
+    <!-- Left: text -->
+    <div class="home-hero__content">
+      <span class="home-hero__eyebrow">
+        <span class="home-hero__eyebrow-dot" aria-hidden="true"></span>
+        Fresh baked daily in Ho Chi Minh City
+      </span>
 
-<main>
-    <section class="section text-center" style="background-color: var(--color-primary-light); border-bottom: var(--border-width) solid var(--color-border);">
-        <div class="container container--md">
-            <h1 class="page-title text-primary mb-4" id="welcome-name">Loading your sweet experience...</h1>
-            <p class="text-lg text-muted mb-8" id="welcome-message">Please wait while we fetch your profile.</p>
-            <div class="flex justify-center gap-4">
-                <a href="products.php" class="btn btn--primary btn--lg">Explore Menu</a>
-                <a href="orders.php" class="btn btn--outline btn--lg">Order History</a>
-            </div>
+      <h1 class="home-hero__title">
+        Life is Short,
+        <span class="home-hero__title-accent">Eat the Donut.</span>
+      </h1>
+
+      <p class="home-hero__desc">
+        Handcrafted with real ingredients, zero preservatives, and an unreasonable amount of love.
+        Pick up in-store or get them delivered while they're still warm.
+      </p>
+
+      <div class="home-hero__actions">
+        <a href="../../views/user/products.php" class="btn btn--primary btn--lg">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;" aria-hidden="true">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          Order Now
+        </a>
+      </div>
+
+      <div class="home-hero__trust" aria-label="Key stats">
+        <div class="home-hero__trust-item">
+          <span class="home-hero__trust-num">50+</span>
+          <span class="home-hero__trust-label">Flavors</span>
         </div>
-    </section>
-
-
-    <section class="section container">
-        <div class="grid-2">
-            <div class="card">
-                <h2 class="h4 font-bold mb-4">Account Details</h2>
-                <div class="divider"></div>
-                <div class="flex flex-col gap-2">
-                    <p class="text-sm text-muted uppercase font-bold">Logged in as</p>
-                    <p class="text-lg font-black text-primary" id="user-profile-email">Loading...</p>
-                    <span class="badge badge--neutral w-full" style="max-width: max-content; margin-top: 0.5rem;" id="user-profile-role">...</span>
-                </div>
-            </div>
-
-
-            <div class="card flex flex-col justify-between">
-                <div>
-                    <h2 class="h4 font-bold mb-4">Need a treat?</h2>
-                    <div class="divider"></div>
-                    <p class="text-base text-muted">Don't let your cravings wait. Check out our freshly baked donuts, custom boxes, and refreshing drinks.</p>
-                </div>
-                <div class="mt-8 text-right">
-                    <a href="products.php" class="btn btn--primary">Order Now &rarr;</a>
-                </div>
-            </div>
+        <div class="home-hero__trust-sep" aria-hidden="true"></div>
+        <div class="home-hero__trust-item">
+          <span class="home-hero__trust-num">5K+</span>
+          <span class="home-hero__trust-label">Happy Customers</span>
         </div>
-    </section>
-</main>
+        <div class="home-hero__trust-sep" aria-hidden="true"></div>
+        <div class="home-hero__trust-item">
+          <span class="home-hero__trust-num">100%</span>
+          <span class="home-hero__trust-label">Fresh Daily</span>
+        </div>
+        <div class="home-hero__trust-sep" aria-hidden="true"></div>
+        <div class="home-hero__trust-item">
+          <span class="home-hero__trust-num">4.9</span>
+          <span class="home-hero__trust-label">Rating</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: image -->
+    <div class="home-hero__visual">
+      <img
+        class="home-hero__main-img"
+        src="../../public/assets/img/home1.jpg"
+        alt="Assorted fresh Bite-Me donuts on display"
+        width="900"
+        height="700"
+        loading="eager"
+      />
+
+      <div class="home-hero__pill" aria-hidden="true">
+        New: Matcha Cloud
+      </div>
+
+      <div class="home-hero__badge">
+        <div class="home-hero__badge-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+        </div>
+        <div class="home-hero__badge-text">
+          <strong>Free Delivery</strong>
+          <span>On orders of 12+ donuts</span>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ======================================================
+       2. MARQUEE TICKER
+  ====================================================== -->
+  <div class="home-ticker" aria-hidden="true">
+    <div class="home-ticker__track">
+      <?php
+      $tickerItems = [
+        'Fresh Glazed',
+        'Strawberry Dream',
+        'Matcha Cloud',
+        'Classic Chocolate',
+        'Salted Caramel',
+        'Blueberry Bliss',
+        'Ube Swirl',
+        'Lemon Zest',
+        'Custom Boxes Available',
+        'Free Delivery on 12+',
+      ];
+      // Duplicate for seamless loop
+      $allItems = array_merge($tickerItems, $tickerItems);
+      foreach ($allItems as $item): ?>
+        <span class="home-ticker__item">
+          <span class="home-ticker__dot"></span>
+          <?= htmlspecialchars($item) ?>
+        </span>
+      <?php endforeach; ?>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       3. ABOUT / STORY
+  ====================================================== -->
+  <section class="home-about section" aria-labelledby="about-heading">
+    <div class="container">
+      <div class="home-about__layout">
+
+        <!-- Image collage -->
+        <div class="home-about__images" aria-hidden="true">
+          <img class="home-about__img-main"  src="../../public/assets/img/home2.jpg" alt="Our team hand-decorating donuts" width="480" height="400" loading="lazy" />
+          <img class="home-about__img-secondary" src="../../public/assets/img/home3.jpg" alt="Close-up of a glazed donut" width="280" height="280" loading="lazy" />
+          <img class="home-about__img-accent" src="../../public/assets/img/home4.jpg" alt="Donut sprinkles detail" width="100" height="100" loading="lazy" />
+          <div class="home-about__years-badge" aria-label="5 years of sweetness">
+            <span class="home-about__years-badge-num">5</span>
+            <span class="home-about__years-badge-text">Years of<br>Sweetness</span>
+          </div>
+        </div>
+
+        <!-- Text -->
+        <div class="home-about__text">
+          <span class="home-about__eyebrow" id="about-heading">Our Story</span>
+          <h2 class="home-about__title">Made with Real Ingredients, Not Just Promises</h2>
+          <p class="home-about__desc">
+            Bite-Me Donuts started in a tiny kitchen in District 1 with one mission: make the best donut in Saigon.
+            No shortcuts. No artificial dyes. No day-old stock. Just dough that we proof overnight, glaze that we make from scratch, and fillings you can actually taste.
+          </p>
+          <p class="home-about__desc">
+            Five years and 5,000+ happy customers later, we still bake every single batch by hand — and we always will.
+          </p>
+
+          <div class="home-about__values">
+            <div class="home-about__value-item">
+              <div class="home-about__value-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+              </div>
+              <div class="home-about__value-text">
+                <strong>Premium Quality</strong>
+                <p>Only real butter, farm eggs, and natural flavors.</p>
+              </div>
+            </div>
+            <div class="home-about__value-item">
+              <div class="home-about__value-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <div class="home-about__value-text">
+                <strong>Baked Fresh Daily</strong>
+                <p>Every donut is made the morning of — never frozen.</p>
+              </div>
+            </div>
+            <div class="home-about__value-item">
+              <div class="home-about__value-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                </svg>
+              </div>
+              <div class="home-about__value-text">
+                <strong>Safe Packaging</strong>
+                <p>Cushioned pink boxes — no squished glazes on delivery.</p>
+              </div>
+            </div>
+            <div class="home-about__value-item">
+              <div class="home-about__value-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+              </div>
+              <div class="home-about__value-text">
+                <strong>Made with Love</strong>
+                <p>A small team that genuinely cares about every bite.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
 
 
-<?php include __DIR__ . '/../layouts/footer.php'; ?>
+  <!-- ======================================================
+       6. FEATURE BANNER — Custom Orders
+  ====================================================== -->
+  <section class="home-banner" aria-labelledby="banner-heading">
+    <img
+      class="home-banner__bg"
+      src="../../public/assets/img/home5.jpg"
+      alt=""
+      aria-hidden="true"
+      width="1440"
+      height="420"
+      loading="lazy"
+    />
+    <div class="home-banner__overlay" aria-hidden="true"></div>
+    <div class="container" style="position:relative; z-index:2; width:100%;">
+      <div class="home-banner__content">
+        <p class="home-banner__eyebrow">Custom Orders</p>
+        <h2 class="home-banner__title" id="banner-heading">Build Your Dream Donut Box</h2>
+        <p class="home-banner__desc">
+          Birthdays, weddings, team parties — we craft custom boxes, towers, and branded collections
+          that taste as incredible as they look. Minimum 12 donuts, fully customisable. 
+        </p>
+        <div style="display:flex; gap:var(--space-4); flex-wrap:wrap;">
+          <a href="../../views/user/products.php" class="btn btn--outline btn--lg">Request a Custom Box</a>
+        </div>
+      </div>
+    </div>
+  </section>
 
+  <!-- ======================================================
+       7. HOW IT WORKS
+  ====================================================== -->
+  <section class="home-steps" aria-labelledby="steps-heading">
+    <div class="container">
+      <div class="home-steps__header">
+        <span class="home-steps__eyebrow">How It Works</span>
+        <h2 class="home-steps__title" id="steps-heading">From Our Oven to Your Door</h2>
+      </div>
 
-<script src="../../public/assets/js/config.js"></script>
-<script src="../../public/assets/js/api.js"></script>
-<script src="../../public/assets/js/home.js"></script>
+      <div class="home-steps__grid">
+        <?php
+        $steps = [
+          [
+            'num'   => 1,
+            'title' => 'Pick Your Donuts',
+            'desc'  => 'Browse our menu and choose your favorites — or let us surprise you with a mystery box.',
+            'svg'   => '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>',
+          ],
+          [
+            'num'   => 2,
+            'title' => 'Place Your Order',
+            'desc'  => 'Check out securely online. Pay by card, ATM transfer, or cash on delivery.',
+            'svg'   => '<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
+          ],
+          [
+            'num'   => 3,
+            'title' => 'We Bake Fresh',
+            'desc'  => 'Your order triggers our kitchen. Every donut is made fresh on the day — never pre-made.',
+            'svg'   => '<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>',
+          ],
+          [
+            'num'   => 4,
+            'title' => 'Enjoy!',
+            'desc'  => 'Pick up in-store or receive doorstep delivery in our signature pink box.',
+            'svg'   => '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
+          ],
+        ];
+        foreach ($steps as $step): ?>
+        <div class="home-step">
+          <div class="home-step__num-wrap" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <?= $step['svg'] ?>
+            </svg>
+            <span class="home-step__num-badge"><?= $step['num'] ?></span>
+          </div>
+          <h3 class="home-step__title"><?= htmlspecialchars($step['title']) ?></h3>
+          <p class="home-step__desc"><?= htmlspecialchars($step['desc']) ?></p>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================
+       8. GALLERY MOSAIC
+  ====================================================== -->
+  <section class="home-gallery" aria-labelledby="gallery-heading">
+    <div class="container">
+      <div class="home-gallery__header">
+        <span class="home-gallery__eyebrow">Donut Gallery</span>
+        <h2 class="home-gallery__title" id="gallery-heading">Too Pretty to Eat? We Dare You.</h2>
+        <p class="home-gallery__sub">Tag us @bitemedonuts for a chance to be featured here.</p>
+      </div>
+
+      <div class="home-gallery__mosaic" role="list" aria-label="Photo gallery">
+        <!-- cell 1: tall (spans 2 rows) -->
+        <div class="home-gallery__cell home-gallery__cell--tall" role="listitem">
+          <img class="home-gallery__img" src="../../public/assets/img/home6.jpg" alt="Tower of assorted donuts" width="320" height="460" loading="lazy" />
+          <div class="home-gallery__cell-overlay" aria-hidden="true">
+            <svg class="home-gallery__cell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+        </div>
+        <!-- cell 2 -->
+        <div class="home-gallery__cell" role="listitem">
+          <img class="home-gallery__img" src="../../public/assets/img/home7.jpg" alt="Pink glazed donut close-up" width="320" height="220" loading="lazy" />
+          <div class="home-gallery__cell-overlay" aria-hidden="true">
+            <svg class="home-gallery__cell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+        </div>
+        <!-- cell 3: wide (spans 2 cols) -->
+        <div class="home-gallery__cell home-gallery__cell--wide" role="listitem">
+          <img class="home-gallery__img" src="../../public/assets/img/home8.jpg" alt="Full donut menu flat-lay" width="640" height="220" loading="lazy" />
+          <div class="home-gallery__cell-overlay" aria-hidden="true">
+            <svg class="home-gallery__cell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+        </div>
+        <!-- cell 4 -->
+        <div class="home-gallery__cell" role="listitem">
+          <img class="home-gallery__img" src="../../public/assets/img/home9.jpg" alt="Chocolate frosted donut with sprinkles" width="320" height="220" loading="lazy" />
+          <div class="home-gallery__cell-overlay" aria-hidden="true">
+            <svg class="home-gallery__cell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+        </div>
+        <!-- cell 5 -->
+        <div class="home-gallery__cell" role="listitem">
+          <img class="home-gallery__img" src="../../public/assets/img/home10.jpg" alt="Matcha glazed donut" width="320" height="220" loading="lazy" />
+          <div class="home-gallery__cell-overlay" aria-hidden="true">
+            <svg class="home-gallery__cell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+        </div>
+        <!-- cell 6 -->
+        <div class="home-gallery__cell" role="listitem">
+          <img class="home-gallery__img" src="../../public/assets/img/home11.jpg" alt="Donut gift box packaging" width="320" height="220" loading="lazy" />
+          <div class="home-gallery__cell-overlay" aria-hidden="true">
+            <svg class="home-gallery__cell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>
+        </div>
+      </div><!-- /.home-gallery__mosaic -->
+    </div>
+  </section>
+
+  <!-- ======================================================
+       9. TESTIMONIALS
+  ====================================================== -->
+  <section class="home-reviews" aria-labelledby="reviews-heading">
+    <div class="container">
+      <div class="home-reviews__header">
+        <span class="home-reviews__eyebrow">Customer Love</span>
+        <h2 class="home-reviews__title" id="reviews-heading">Don't Take Our Word for It</h2>
+      </div>
+
+      <div class="home-reviews__grid">
+        <?php
+        $reviews = [
+          [
+            'quote'  => 'I ordered a custom birthday box for my daughter and it was absolutely stunning. Everyone at the party couldn\'t stop talking about how good they tasted.',
+            'name'   => 'Linh T.',
+            'label'  => 'Regular customer since 2022',
+            'stars'  => 5,
+          ],
+          [
+            'quote'  => 'Best donuts in Saigon, no contest. The matcha glaze is unlike anything I\'ve had elsewhere. Fresh, soft, and not too sweet. Will order every week.',
+            'name'   => 'Marco R.',
+            'label'  => 'Food blogger',
+            'stars'  => 5,
+          ],
+          [
+            'quote'  => 'Delivery was fast and the packaging kept everything in perfect shape. The salted caramel filled one is criminally good. 10/10 would recommend.',
+            'name'   => 'Phuong N.',
+            'label'  => 'Verified buyer',
+            'stars'  => 5,
+          ],
+        ];
+        // Star SVG path
+        $starPath = '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>';
+        foreach ($reviews as $review): ?>
+        <article class="home-review-card">
+          <div class="home-review-card__stars" aria-label="<?= $review['stars'] ?> out of 5 stars">
+            <?php for ($i = 1; $i <= 5; $i++): ?>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="<?= $i <= $review['stars'] ? 'currentColor' : 'none' ?>" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <?= $starPath ?>
+            </svg>
+            <?php endfor; ?>
+          </div>
+          <blockquote class="home-review-card__quote">"<?= htmlspecialchars($review['quote']) ?>"</blockquote>
+          <div class="home-review-card__author">
+            <img
+              class="home-review-card__avatar"
+              src="../../public/assets/img/home12.jpg"
+              alt="Photo of <?= htmlspecialchars($review['name']) ?>"
+              width="44"
+              height="44"
+              loading="lazy"
+              aria-hidden="true"
+            />
+            <div>
+              <p class="home-review-card__author-name"><?= htmlspecialchars($review['name']) ?></p>
+              <p class="home-review-card__author-label"><?= htmlspecialchars($review['label']) ?></p>
+            </div>
+          </div>
+        </article>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  </section>
+
+  <?php include __DIR__ . '/../layouts/footer.php'; ?>
+
+  <!-- ======================================================
+       JAVASCRIPT
+  ====================================================== -->
+  <script>
+  (function () {
+    'use strict';
+
+    /* ---------- Add to cart buttons ---------- */
+    document.querySelectorAll('.home-product-card__cart-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const productId = btn.dataset.productId;
+        if (!productId) return;
+
+        btn.disabled = true;
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;animation:spin .6s linear infinite"><polyline points="23 4 23 10 17 10"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10"/></svg>';
+
+        // Replace with actual fetch to /api/cart/add
+        fetch('/api/cart/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product_id: productId, quantity: 1 }),
+        })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data.success) {
+            btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><polyline points="20 6 9 17 4 12"/></svg>';
+            btn.style.backgroundColor = 'var(--color-success)';
+            setTimeout(function () {
+              btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+              btn.style.backgroundColor = '';
+              btn.disabled = false;
+            }, 1800);
+          } else {
+            btn.disabled = false;
+            resetCartBtn(btn);
+          }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          resetCartBtn(btn);
+        });
+      });
+    });
+
+    function resetCartBtn(btn) {
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+    }
+
+    /* ---------- Newsletter ---------- */
+    var newsletterBtn  = document.getElementById('newsletterSubmit');
+    var newsletterNote = document.getElementById('newsletterNote');
+
+    newsletterBtn.addEventListener('click', function () {
+      var email = document.getElementById('newsletter-email').value.trim();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        newsletterNote.textContent = 'Please enter a valid email address.';
+        newsletterNote.style.color = 'rgba(255,200,200,0.95)';
+        return;
+      }
+      newsletterBtn.textContent = 'Subscribing…';
+      newsletterBtn.disabled = true;
+
+      // Replace with actual endpoint
+      setTimeout(function () {
+        newsletterNote.textContent = 'You\'re in! Check your inbox for a welcome treat.';
+        newsletterNote.style.color = 'rgba(255,255,255,0.95)';
+        newsletterBtn.textContent = 'Subscribed!';
+      }, 1000);
+    });
+
+  })();
+  </script>
+
 </body>
 </html>
-
-
-
-
-
