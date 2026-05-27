@@ -31,7 +31,16 @@ $router->post('/api/auth/reset-password', [AuthController::class, 'resetPassword
 $router->get('/api/users/me', [UserController::class, 'me']);
 $router->get('/api/users/{id}', [UserController::class, 'show']);
 
+$router->post('/api/admin/login', [AdminController::class, 'login']);
 $router->get('/api/admin/dashboard', [AdminController::class, 'dashboard']);
+
+$router->get('/api/admin/customers', [AdminController::class, 'getCustomers']);
+$router->post('/api/admin/customers', [AdminController::class, 'createCustomer']);
+$router->delete('/api/admin/customers/{id}', [AdminController::class, 'deleteCustomer']);
+
+$router->get('/api/admin/orders', [AdminController::class, 'getOrders']);
+$router->post('/api/admin/orders', [AdminController::class, 'createOrder']);
+$router->put('/api/admin/orders/{id}/status', [AdminController::class, 'updateOrderStatus']);
 
 $router->get('/api/admin/products', [ProductController::class, 'adminIndex']);
 $router->get('/api/admin/products/{id}', [ProductController::class, 'adminShow']);

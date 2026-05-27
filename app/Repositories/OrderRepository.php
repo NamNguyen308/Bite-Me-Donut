@@ -194,22 +194,36 @@ public function countByUserId(int $userId): int
     return (int) ($row['total'] ?? 0);
 }
 
-public function getAll(int $page = 1, int $limit = 10): array
-{
-    $offset = ($page - 1) * $limit;
+    public function getAll(int $page = 1, int $limit = 10): array
+    {
+        $offset = ($page - 1) * $limit;
 
-    $stmt = $this->db->prepare("
-        SELECT *
-        FROM orders
-        ORDER BY id DESC
-        LIMIT :limit OFFSET :offset
-    ");
+        $stmt = $this->db->prepare("
+            SELECT *
+            FROM orders
+            ORDER BY id DESC
+            LIMIT :limit OFFSET :offset
+        ");
 
-    $stmt->bindValue('limit', $limit, PDO::PARAM_INT);
-    $stmt->bindValue('offset', $offset, PDO::PARAM_INT);
+        $stmt->bindValue('limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue('offset', $offset, PDO::PARAM_INT);
 
-    $stmt->execute();
+        $stmt->execute();
 
-    return $stmt->fetchAll();
-}
+        return $stmt->fetchAll();
+    }
+
+    public function updateStatus(int $id, string $status): bool
+    {
+        $stmt = $this->db->prepare("
+            UPDATE orders
+            SET status = :status, updated_at = NOW()
+            WHERE id = :id
+        ");
+
+        return $stmt->execute([
+            'id' => $id,
+            'status' => $status
+        ]);
+    }
 }

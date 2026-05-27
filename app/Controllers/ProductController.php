@@ -33,6 +33,44 @@ class ProductController
         $this->sendResult($result);
     }
 
+    public function adminIndex(Request $request): void
+    {
+        $result = $this->productService->getAllProductsAdmin(
+            $request->query()
+        );
+
+        $this->sendResult($result);
+    }
+
+    public function adminShow(Request $request, array $params = []): void
+    {
+        $productId = (int) ($params['id'] ?? 0);
+
+        $result = $this->productService->getProductByIdAdmin($productId);
+
+        $this->sendResult($result);
+    }
+
+    public function store(Request $request): void
+    {
+        $result = $this->productService->createProduct($request->body());
+        $this->sendResult($result);
+    }
+
+    public function update(Request $request, array $params = []): void
+    {
+        $productId = (int) ($params['id'] ?? 0);
+        $result = $this->productService->updateProduct($productId, $request->body());
+        $this->sendResult($result);
+    }
+
+    public function destroy(Request $request, array $params = []): void
+    {
+        $productId = (int) ($params['id'] ?? 0);
+        $result = $this->productService->deleteProduct($productId);
+        $this->sendResult($result);
+    }
+
     private function sendResult(array $result): void
     {
         if ($result['success'] === true) {

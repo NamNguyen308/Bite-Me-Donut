@@ -1,0 +1,81 @@
+/* ============================================================
+   ADMIN-LOGIN.CSS — Admin Login Styles
+   ============================================================ */
+
+.admin-login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-bg);
+    background-image:
+        radial-gradient(circle at 12% 18%, var(--color-primary-light) 0, transparent 38%),
+        radial-gradient(circle at 88% 82%, var(--color-bg-alt) 0, transparent 42%);
+}
+
+.admin-login-card {
+    width: 100%;
+    max-width: 400px;
+    background-color: var(--color-bg-card);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-8);
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+}
+
+.admin-login-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-primary-light);
+    margin-bottom: var(--space-4);
+}
+
+.admin-login-title {
+    font-family: var(--font-heading);
+    font-size: var(--text-2xl);
+    color: var(--color-primary);
+    margin-bottom: var(--space-6);
+}
+
+.admin-form-group {
+    margin-bottom: var(--space-4);
+    text-align: left;
+}
+
+.admin-form-label {
+    display: block;
+    font-weight: var(--font-weight-medium);
+    margin-bottom: var(--space-1);
+    color: var(--color-text);
+}
+
+.admin-form-input {
+    width: 100%;
+    padding: var(--space-3);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+}
+
+.admin-form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.admin-alert {
+    padding: var(--space-3);
+    background-color: #ffebee;
+    color: #c62828;
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--space-4);
+    font-size: var(--text-sm);
+}
+
+.hidden {
+    display: none !important;
+}
