@@ -50,22 +50,7 @@
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="navbar__inner">
-            <a href="home.php" class="navbar__logo">Bite Me Donut</a>
-            <div class="navbar__nav">
-                <a href="products.php" class="navbar__link">Menu</a>
-                <a href="cart.php" class="navbar__link">Cart</a>
-                <a href="orders.php" class="navbar__link active">Orders</a>
-            </div>
-            <div class="navbar__actions">
-                <a href="cart.php" class="navbar__icon-btn" title="View Cart">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                </a>
-                <button id="global-btn-logout" class="btn btn--danger btn--sm" style="margin-left: 1rem;">Logout</button>
-            </div>
-        </div>
-    </nav>
+    <?php include __DIR__ . '/../layouts/header.php'; ?>
 
 
     <main class="container section">
@@ -83,11 +68,7 @@
     </main>
 
 
-    <footer class="footer">
-        <div class="container text-center text-sm">
-            &copy; 2026 Bite Me Donut. All rights reserved.
-        </div>
-    </footer>
+<?php include __DIR__ . '/../layouts/footer.php'; ?>
 
 
     <script src="../public/assets/js/config.js"></script>
