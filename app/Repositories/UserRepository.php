@@ -107,4 +107,43 @@ public function countAll(): int
 
     return (int) ($row['total'] ?? 0);
 }
+
+/**
+ * Tìm user theo cả email VÀ phone (dùng cho verify identity khi quên mật khẩu).
+ */
+public function findByEmailAndPhone(string $email, string $phone): ?array
+{
+    $stmt = $this->db->prepare("
+        SELECT *
+        FROM users
+        WHERE email = :email AND phone = :phone
+        LIMIT 1
+    ");
+
+    $stmt->execute([
+        'email' => $email,
+        'phone' => $phone,
+    ]);
+
+    $user = $stmt->fetch();
+
+    return $user ?: null;
+}
+
+/**
+ * Cập nhật password_hash cho user (dùng cho reset password).
+ */
+public function updatePasswordHash(int $userId, string $passwordHash): bool
+{
+    $stmt = $this->db->prepare("
+        UPDATE users
+        SET password_hash = :password_hash
+        WHERE id = :id
+    ");
+
+    return $stmt->execute([
+        'password_hash' => $passwordHash,
+        'id'            => $userId,
+    ]);
+}
 }

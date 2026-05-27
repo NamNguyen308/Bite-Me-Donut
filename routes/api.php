@@ -25,6 +25,8 @@ $router->post('/api/otp/request', [OtpController::class, 'requestOtp']);
 $router->post('/api/otp/verify', [OtpController::class, 'verifyOtp']);
 $router->post('/api/auth/complete-login', [AuthController::class, 'completeLogin']);
 $router->post('/api/auth/logout', [AuthController::class, 'logout']);
+$router->post('/api/auth/verify-identity', [AuthController::class, 'verifyIdentity']);
+$router->post('/api/auth/reset-password', [AuthController::class, 'resetPassword']);
 
 $router->get('/api/users/me', [UserController::class, 'me']);
 $router->get('/api/users/{id}', [UserController::class, 'show']);

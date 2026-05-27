@@ -82,4 +82,48 @@ public function logout(Request $request): void
         $result['errors'] ?? []
     );
 }
+
+public function verifyIdentity(Request $request): void
+{
+    $result = $this->authService->verifyIdentity(
+        $request->body()
+    );
+
+    if ($result['success'] === true) {
+        Response::success(
+            $result['message'],
+            $result['data'],
+            $result['status_code']
+        );
+    }
+
+    Response::error(
+        $result['error_code'],
+        $result['message'],
+        $result['status_code'],
+        $result['errors'] ?? []
+    );
+}
+
+public function resetPassword(Request $request): void
+{
+    $result = $this->authService->resetPassword(
+        $request->body()
+    );
+
+    if ($result['success'] === true) {
+        Response::success(
+            $result['message'],
+            $result['data'],
+            $result['status_code']
+        );
+    }
+
+    Response::error(
+        $result['error_code'],
+        $result['message'],
+        $result['status_code'],
+        $result['errors'] ?? []
+    );
+}
 }

@@ -273,4 +273,181 @@ public function logout(?string $plainToken): array
         'data' => []
     ];
 }
+
+/* ═══════════════════════════════════════════════════════════
+   FORGOT PASSWORD — verify identity (step 1)
+═══════════════════════════════════════════════════════════ */
+
+/**
+ * Xác minh danh tính bằng email + phone.
+ * Nếu khớp → tạo reset_token tạm (lưu trong session), trả về cho frontend.
+ */
+public function verifyIdentity(array $data): array
+{
+    $errors = $this->validationService->validateVerifyIdentity($data);
+
+    if (!empty($errors)) {
+        return [
+            'success'     => false,
+            'status_code' => 400,
+            'error_code'  => 'VALIDATION_ERROR',
+            'message'     => 'Invalid request data',
+            'errors'      => $errors,
+        ];
+    }
+
+    $email = trim($data['email']);
+    $phone = trim($data['phone']);
+
+    $user = $this->userRepository->findByEmailAndPhone($email, $phone);
+
+    if (!$user) {
+        return [
+            'success'     => false,
+            'status_code' => 404,
+            'error_code'  => 'USER_NOT_FOUND',
+            'message'     => 'No account found with that email and phone combination',
+        ];
+    }
+
+    if ((int) $user['is_active'] !== 1) {
+        return [
+            'success'     => false,
+            'status_code' => 403,
+            'error_code'  => 'ACCOUNT_INACTIVE',
+            'message'     => 'This account has been deactivated',
+        ];
+    }
+
+    // Tạo reset token ngẫu nhiên
+    $plainToken = bin2hex(random_bytes(32));  // 64-char hex string
+    $tokenHash  = hash('sha256', $plainToken);
+    $expiresAt  = time() + (15 * 60); // hết hạn sau 15 phút
+
+    // Lưu vào session (không cần thay đổi schema DB)
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $_SESSION['reset_token'] = [
+        'token_hash' => $tokenHash,
+        'user_id'    => (int) $user['id'],
+        'expires_at' => $expiresAt,
+        'used'       => false,
+    ];
+
+    return [
+        'success'     => true,
+        'status_code' => 200,
+        'message'     => 'IDENTITY_VERIFIED',
+        'data'        => [
+            'reset_token' => $plainToken,
+        ],
+    ];
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FORGOT PASSWORD — reset password (step 2)
+═══════════════════════════════════════════════════════════ */
+
+/**
+ * Đặt lại mật khẩu bằng reset_token + new_password.
+ * Verify token từ session → update password_hash.
+ */
+public function resetPassword(array $data): array
+{
+    $errors = $this->validationService->validateResetPassword($data);
+
+    if (!empty($errors)) {
+        return [
+            'success'     => false,
+            'status_code' => 400,
+            'error_code'  => 'VALIDATION_ERROR',
+            'message'     => 'Invalid request data',
+            'errors'      => $errors,
+        ];
+    }
+
+    $plainToken  = trim($data['reset_token']);
+    $newPassword = $data['new_password'];
+
+    // Lấy token info từ session
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $stored = $_SESSION['reset_token'] ?? null;
+
+    if (!$stored) {
+        return [
+            'success'     => false,
+            'status_code' => 400,
+            'error_code'  => 'INVALID_RESET_TOKEN',
+            'message'     => 'Reset token is invalid or session has expired',
+        ];
+    }
+
+    // Token đã dùng rồi?
+    if ($stored['used'] === true) {
+        unset($_SESSION['reset_token']);
+        return [
+            'success'     => false,
+            'status_code' => 400,
+            'error_code'  => 'RESET_TOKEN_USED',
+            'message'     => 'This reset token has already been used',
+        ];
+    }
+
+    // Token hết hạn?
+    if (time() > $stored['expires_at']) {
+        unset($_SESSION['reset_token']);
+        return [
+            'success'     => false,
+            'status_code' => 400,
+            'error_code'  => 'INVALID_RESET_TOKEN',
+            'message'     => 'Reset token has expired',
+        ];
+    }
+
+    // So sánh hash token
+    $providedHash = hash('sha256', $plainToken);
+
+    if (!hash_equals($stored['token_hash'], $providedHash)) {
+        return [
+            'success'     => false,
+            'status_code' => 400,
+            'error_code'  => 'INVALID_RESET_TOKEN',
+            'message'     => 'Reset token is invalid',
+        ];
+    }
+
+    // Tìm user
+    $userId = (int) $stored['user_id'];
+    $user   = $this->userRepository->findById($userId);
+
+    if (!$user) {
+        unset($_SESSION['reset_token']);
+        return [
+            'success'     => false,
+            'status_code' => 404,
+            'error_code'  => 'USER_NOT_FOUND',
+            'message'     => 'User account not found',
+        ];
+    }
+
+    // Hash mật khẩu mới và cập nhật
+    $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+    $this->userRepository->updatePasswordHash($userId, $passwordHash);
+
+    // Đánh dấu token đã dùng, rồi xóa luôn
+    $_SESSION['reset_token']['used'] = true;
+    unset($_SESSION['reset_token']);
+
+    return [
+        'success'     => true,
+        'status_code' => 200,
+        'message'     => 'PASSWORD_RESET_SUCCESS',
+        'data'        => [],
+    ];
+}
 }
