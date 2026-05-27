@@ -19,8 +19,8 @@
   /* --------------------------------------------------------
    * CẤU HÌNH
    * -------------------------------------------------------- */
-  // Base URL rỗng = cùng origin với trang (Laragon virtual host).
-  const API_BASE = '';
+  // Cập nhật Base URL để phù hợp với đường dẫn thư mục Laragon.
+  const API_BASE = '/Bite-Me-Donut/public';
 
   const ENDPOINTS = {
     login: API_BASE + '/api/auth/login',

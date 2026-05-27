@@ -15,7 +15,7 @@
 // 1. CONFIG
 // ─────────────────────────────────────────────────────────────
 
-const API_BASE = '/api';
+const API_BASE = '/Bite-Me-Donut/public/api';
 
 // Key lưu token trong localStorage
 const TOKEN_KEY  = 'bmd_access_token';

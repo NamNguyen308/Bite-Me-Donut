@@ -164,7 +164,7 @@ require_once __DIR__ . '/../layouts/header.php';
   JS xử lý gọi API đăng nhập + request OTP.
   Đặt ở cuối body để DOM đã sẵn sàng.
 -->
-<script src="/assets/js/user-login.js" defer></script>
+<script src="../../public/assets/js/user-login.js" defer></script>
 
 <?php
 /**
