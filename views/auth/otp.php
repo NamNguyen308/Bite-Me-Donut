@@ -1,152 +1,302 @@
 <?php
-/**
- * ============================================================
- * VIEW: views/auth/otp.php
- * OTP Verification page — step 3 of 4 in the login flow.
- *
- * Flow (architecture.md):
- *   1. User arrives here after POST /api/auth/login succeeded.
- *      JS stored login_challenge_id in sessionStorage.
- *   2. JS auto-calls POST /api/otp/request on page load
- *      (triggers Twilio voice call with OTP).
- *   3. User enters the 6-digit OTP they received via phone call.
- *   4. JS calls POST /api/otp/verify  → status = OTP_VERIFIED.
- *   5. JS calls POST /api/auth/complete-login → receives access_token.
- *   6. JS stores access_token in localStorage, redirects to home.php.
- *
- * Security notes:
- *   - login_challenge_id is read from sessionStorage (set by user-login.js).
- *   - access_token is stored in localStorage after complete-login.
- *   - No token is issued on this page before OTP_VERIFIED.
- * ============================================================
- */
+declare(strict_types=1);
 
 $pageTitle = 'Verify OTP';
+
+function otpProjectRoot(): string
+{
+    return dirname(__DIR__, 2);
+}
+
+function otpLoadEnv(): array
+{
+    $envPath = otpProjectRoot() . DIRECTORY_SEPARATOR . '.env';
+    $env = [];
+
+    if (!is_file($envPath)) {
+        return $env;
+    }
+
+    $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+    foreach ($lines as $line) {
+        $line = trim($line);
+
+        if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) {
+            continue;
+        }
+
+        [$key, $value] = explode('=', $line, 2);
+        $env[trim($key)] = trim(trim($value), "\"'");
+    }
+
+    return $env;
+}
+
+function otpEnv(string $key, ?string $default = null): ?string
+{
+    static $env = null;
+
+    if ($env === null) {
+        $env = otpLoadEnv();
+    }
+
+    return $env[$key] ?? $default;
+}
+
+function otpJson(array $payload, int $statusCode = 200): void
+{
+    http_response_code($statusCode);
+    header('Content-Type: application/json; charset=utf-8');
+
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+function otpReadJson(): array
+{
+    $raw = file_get_contents('php://input');
+    $data = json_decode($raw ?: '', true);
+
+    if (!is_array($data)) {
+        otpJson([
+            'success' => false,
+            'error_code' => 'INVALID_JSON',
+            'message' => 'Invalid JSON request body'
+        ], 400);
+    }
+
+    return $data;
+}
+
+function otpAppBasePath(): string
+{
+    $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $basePath = preg_replace('#/(views|public)/.*$#', '', $scriptName);
+
+    if ($basePath === null || $basePath === $scriptName) {
+        return '';
+    }
+
+    return rtrim($basePath, '/');
+}
+
+function otpScheme(): string
+{
+    $https = $_SERVER['HTTPS'] ?? '';
+    return ($https !== '' && $https !== 'off') ? 'https' : 'http';
+}
+
+function otpApiBaseUrl(): string
+{
+    $appUrl = otpEnv('APP_URL', '');
+
+    if ($appUrl !== null && trim($appUrl) !== '') {
+        return rtrim(trim($appUrl), '/') . '/api';
+    }
+
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+    return otpScheme() . '://' . $host . otpAppBasePath() . '/api';
+}
+
+function otpForwardPostToApi(string $endpoint, array $payload): void
+{
+    $url = otpApiBaseUrl() . $endpoint;
+    $jsonPayload = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+    if ($jsonPayload === false) {
+        otpJson([
+            'success' => false,
+            'error_code' => 'JSON_ENCODE_ERROR',
+            'message' => 'Cannot encode request payload'
+        ], 500);
+    }
+
+    if (!function_exists('curl_init')) {
+        otpJson([
+            'success' => false,
+            'error_code' => 'CURL_NOT_AVAILABLE',
+            'message' => 'PHP cURL extension is not available'
+        ], 500);
+    }
+
+    $ch = curl_init($url);
+
+    if ($ch === false) {
+        otpJson([
+            'success' => false,
+            'error_code' => 'CURL_INIT_FAILED',
+            'message' => 'Cannot initialize cURL'
+        ], 500);
+    }
+
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Accept: application/json'
+        ],
+        CURLOPT_POSTFIELDS => $jsonPayload,
+        CURLOPT_TIMEOUT => 30
+    ]);
+
+    $rawResponse = curl_exec($ch);
+    $curlError = curl_error($ch);
+    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    curl_close($ch);
+
+    if ($rawResponse === false) {
+        otpJson([
+            'success' => false,
+            'error_code' => 'API_PROXY_CURL_ERROR',
+            'message' => $curlError !== '' ? $curlError : 'Cannot call backend API',
+            'api_url' => $url
+        ], 502);
+    }
+
+    $decoded = json_decode($rawResponse, true);
+
+    if (!is_array($decoded)) {
+        otpJson([
+            'success' => false,
+            'error_code' => 'API_PROXY_INVALID_JSON',
+            'message' => 'Backend API did not return valid JSON',
+            'api_url' => $url,
+            'raw_response' => $rawResponse
+        ], 502);
+    }
+
+    http_response_code($httpCode > 0 ? $httpCode : 200);
+    header('Content-Type: application/json; charset=utf-8');
+
+    echo $rawResponse;
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_GET['otp_ajax'] ?? '') === '1') {
+    $input = otpReadJson();
+    $action = $input['action'] ?? '';
+
+    $challengeId = trim((string)($input['login_challenge_id'] ?? ''));
+
+    if ($challengeId === '') {
+        otpJson([
+            'success' => false,
+            'error_code' => 'VALIDATION_ERROR',
+            'message' => 'login_challenge_id is required'
+        ], 400);
+    }
+
+    if ($action === 'request_otp') {
+        otpForwardPostToApi('/otp/request', [
+            'login_challenge_id' => $challengeId
+        ]);
+    }
+
+    if ($action === 'verify_otp') {
+        $otpCode = trim((string)($input['otp_code'] ?? ''));
+
+        otpForwardPostToApi('/otp/verify', [
+            'login_challenge_id' => $challengeId,
+            'otp_code' => $otpCode
+        ]);
+    }
+
+    if ($action === 'complete_login') {
+        otpForwardPostToApi('/auth/complete-login', [
+            'login_challenge_id' => $challengeId
+        ]);
+    }
+
+    otpJson([
+        'success' => false,
+        'error_code' => 'INVALID_ACTION',
+        'message' => 'Invalid OTP action'
+    ], 400);
+}
+
+$appBasePath = otpAppBasePath();
+$publicBasePath = $appBasePath . '/public';
+
+$otpProxyUrl = ($_SERVER['SCRIPT_NAME'] ?? '') . '?otp_ajax=1';
+$loginUrl = $appBasePath . '/views/auth/user-login.php';
+$homeUrl = $appBasePath . '/views/user/home.php';
 
 require_once __DIR__ . '/../layouts/header.php';
 ?>
 
-<link rel="stylesheet" href="../../public/assets/css/root.css">
-<link rel="stylesheet" href="../../public/assets/css/otp.css">
+<link rel="stylesheet" href="<?= htmlspecialchars($publicBasePath) ?>/assets/css/root.css">
+<link rel="stylesheet" href="<?= htmlspecialchars($publicBasePath) ?>/assets/css/otp.css">
 
 <main class="auth-page">
-  <section class="auth-card otp-card" aria-labelledby="otp-title">
+  <section class="otp-card" aria-labelledby="otp-title">
 
-    <!-- Card header -->
     <header class="auth-card__head">
       <span class="auth-card__logo" aria-hidden="true">
-        <!-- Phone ringing SVG icon -->
-        <svg viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Phone call">
-          <circle cx="24" cy="24" r="22" fill="var(--color-primary-light)"></circle>
-          <path d="M17 14h-3a2 2 0 0 0-2 2c0 10.5 8.5 19 19 19a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2c-1.3 0-2.5-.2-3.7-.6a2 2 0 0 0-2 .5l-1.8 1.8a15.1 15.1 0 0 1-6.6-6.6l1.8-1.8a2 2 0 0 0 .5-2A11.4 11.4 0 0 1 19 16a2 2 0 0 0-2-2z"
-            fill="var(--color-primary)" stroke="none"/>
-          <!-- Sound waves -->
-          <path d="M30 18a6 6 0 0 1 0 12" stroke="var(--color-primary)" stroke-width="2" fill="none" stroke-linecap="round"/>
-          <path d="M33 15a10 10 0 0 1 0 18" stroke="var(--color-primary)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+        <svg viewBox="0 0 48 48" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="12" width="32" height="28" rx="6" fill="var(--color-primary)" opacity="0.12"/>
+          <rect x="8" y="12" width="32" height="28" rx="6" stroke="var(--color-primary)" stroke-width="2.5"/>
+          <path d="M16 22h16M16 28h10" stroke="var(--color-primary)" stroke-width="2.5" stroke-linecap="round"/>
         </svg>
       </span>
 
-      <h1 class="auth-card__title" id="otp-title">Enter Verification Code</h1>
-      <p class="auth-card__subtitle" id="otp-subtitle">
-        We're calling your registered phone number.<br>
-        Please listen and enter the 6-digit code.
+      <h1 class="auth-card__title" id="otp-title">OTP Verification</h1>
+      <p class="auth-card__subtitle">
+        We will call your phone and read a 6-digit verification code.
       </p>
     </header>
 
-    <!-- Status banner: shown while Twilio call is being initiated -->
-    <div id="call-status-banner" class="call-status-banner call-status-banner--calling" role="status" aria-live="polite">
-      <span class="call-status-banner__icon" aria-hidden="true">
-        <!-- Animated phone SVG -->
-        <svg class="icon-phone-ring" viewBox="0 0 24 24" width="18" height="18" fill="none"
-             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.06 6.06l1.8-1.8a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-        </svg>
-      </span>
-      <span id="call-status-text">Initiating voice call…</span>
+    <div id="otp-alert" class="alert alert--danger hidden" role="alert" aria-live="polite"></div>
+
+    <div id="call-status-banner" class="call-status-banner call-status-banner--calling">
+      <span id="call-status-text">Preparing verification call…</span>
     </div>
 
-    <!-- Alert area (errors, warnings) -->
-    <div id="otp-alert" class="alert alert--danger hidden" role="alert" aria-live="assertive"></div>
+    <div id="otp-countdown-wrap" class="otp-countdown-wrap hidden">
+      Code expires in <strong id="otp-countdown">05:00</strong>
+    </div>
 
-    <!-- OTP form -->
-    <form id="otp-form" class="auth-form otp-form" novalidate autocomplete="off">
-
-      <!-- 6-digit input boxes -->
-      <div class="otp-inputs" role="group" aria-label="Enter the 6-digit verification code">
-        <input class="otp-digit" type="text" inputmode="numeric" pattern="[0-9]"
-               maxlength="1" aria-label="Digit 1" autocomplete="one-time-code" data-index="0">
-        <input class="otp-digit" type="text" inputmode="numeric" pattern="[0-9]"
-               maxlength="1" aria-label="Digit 2" data-index="1">
-        <input class="otp-digit" type="text" inputmode="numeric" pattern="[0-9]"
-               maxlength="1" aria-label="Digit 3" data-index="2">
-
-        <!-- Visual separator dot -->
-        <span class="otp-separator" aria-hidden="true">
-          <svg viewBox="0 0 8 24" width="8" height="24">
-            <circle cx="4" cy="12" r="3" fill="var(--color-border-dark)"/>
-          </svg>
-        </span>
-
-        <input class="otp-digit" type="text" inputmode="numeric" pattern="[0-9]"
-               maxlength="1" aria-label="Digit 4" data-index="3">
-        <input class="otp-digit" type="text" inputmode="numeric" pattern="[0-9]"
-               maxlength="1" aria-label="Digit 5" data-index="4">
-        <input class="otp-digit" type="text" inputmode="numeric" pattern="[0-9]"
-               maxlength="1" aria-label="Digit 6" data-index="5">
+    <form id="otp-form" class="otp-form" novalidate autocomplete="off">
+      <div class="otp-inputs" aria-label="Enter 6-digit OTP">
+        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 1">
+        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2">
+        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3">
+        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4">
+        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5">
+        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6">
       </div>
 
-      <!-- Countdown + resend -->
-      <div class="otp-timer-row">
-        <span id="otp-countdown-wrap" class="otp-timer">
-          <!-- Clock SVG -->
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-               aria-hidden="true">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
-          Code expires in <strong id="otp-countdown">05:00</strong>
-        </span>
-
-        <button type="button" id="resend-btn" class="auth-link otp-resend hidden" disabled>
-          <!-- Refresh SVG -->
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-               aria-hidden="true">
-            <polyline points="1 4 1 10 7 10"/>
-            <path d="M3.51 15a9 9 0 1 0 .49-3.54"/>
-          </svg>
-          Request a new call
-        </button>
-      </div>
-
-      <!-- Submit -->
       <button type="submit" class="btn btn--primary btn--lg w-full" id="otp-submit" disabled>
-        <span class="btn-label">Verify &amp; Sign In</span>
+        <span class="btn-label">Verify OTP</span>
         <span class="spinner spinner--btn hidden" id="otp-spinner" aria-hidden="true"></span>
       </button>
     </form>
 
-    <!-- Card footer -->
+    <button type="button" class="btn btn--secondary w-full hidden" id="resend-btn">
+      Request another call
+    </button>
+
     <footer class="auth-card__foot">
-      <p class="text-muted text-center otp-help">
-        <!-- Info SVG -->
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
-             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-             aria-hidden="true" style="vertical-align:-2px; margin-right:4px;">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        Didn't receive the call? Wait a moment, then request a new one.
-        <br>
-        <a class="auth-link" href="../../views/auth/user-login.php">Back to Login</a>
+      <p class="text-muted text-center">
+        Wrong account?
+        <a class="auth-link" href="<?= htmlspecialchars($loginUrl) ?>">Back to Login</a>
       </p>
     </footer>
 
   </section>
 </main>
 
-<script src="/assets/js/otp.js" defer></script>
+<script>
+  window.OTP_CONFIG = {
+    proxyUrl: <?= json_encode($otpProxyUrl) ?>,
+    loginUrl: <?= json_encode($loginUrl) ?>,
+    homeUrl: <?= json_encode($homeUrl) ?>
+  };
+</script>
+
+<script src="<?= htmlspecialchars($publicBasePath) ?>/assets/js/otp.js" defer></script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

@@ -1,12 +1,211 @@
 <?php
-// home.php — Bite-Me-Donut Homepage
+declare(strict_types=1);
 
-// -------------------------------------------------------
-// Database: fetch hot products (is_active = 1, limit 8)
-// Adjust the PDO connection to match your config/Database class
-// -------------------------------------------------------
+function homeProjectRoot(): string
+{
+    return dirname(__DIR__, 2);
+}
 
+function homeLoadEnv(): array
+{
+    $envPath = homeProjectRoot() . DIRECTORY_SEPARATOR . '.env';
+    $env = [];
+
+    if (!is_file($envPath)) {
+        return $env;
+    }
+
+    $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+    foreach ($lines as $line) {
+        $line = trim($line);
+
+        if ($line === '' || $line[0] === '#' || !str_contains($line, '=')) {
+            continue;
+        }
+
+        [$key, $value] = explode('=', $line, 2);
+        $env[trim($key)] = trim(trim($value), "\"'");
+    }
+
+    return $env;
+}
+
+function homeEnv(string $key, ?string $default = null): ?string
+{
+    static $env = null;
+
+    if ($env === null) {
+        $env = homeLoadEnv();
+    }
+
+    return $env[$key] ?? $default;
+}
+
+function homeAppBasePath(): string
+{
+    $scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $basePath = preg_replace('#/(views|public)/.*$#', '', $scriptName);
+
+    if ($basePath === null || $basePath === $scriptName) {
+        return '';
+    }
+
+    return rtrim($basePath, '/');
+}
+
+function homeScheme(): string
+{
+    $https = $_SERVER['HTTPS'] ?? '';
+    return ($https !== '' && $https !== 'off') ? 'https' : 'http';
+}
+
+function homeApiBaseUrl(): string
+{
+    $appUrl = homeEnv('APP_URL', '');
+
+    if ($appUrl !== null && trim($appUrl) !== '') {
+        return rtrim(trim($appUrl), '/') . '/api';
+    }
+
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+    return homeScheme() . '://' . $host . homeAppBasePath() . '/api';
+}
+
+function homeJson(array $payload, int $statusCode = 200): void
+{
+    http_response_code($statusCode);
+    header('Content-Type: application/json; charset=utf-8');
+
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+function homeReadJson(): array
+{
+    $raw = file_get_contents('php://input');
+    $data = json_decode($raw ?: '', true);
+
+    if (!is_array($data)) {
+        homeJson([
+            'success' => false,
+            'error_code' => 'INVALID_JSON',
+            'message' => 'Invalid JSON request body'
+        ], 400);
+    }
+
+    return $data;
+}
+
+function homeForwardToApi(string $method, string $endpoint, string $token, array $payload = []): void
+{
+    $url = homeApiBaseUrl() . $endpoint;
+
+    $headers = [
+        'Accept: application/json',
+        'Authorization: Bearer ' . $token
+    ];
+
+    $options = [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 25,
+        CURLOPT_HTTPHEADER => $headers
+    ];
+
+    if ($method === 'POST') {
+        $headers[] = 'Content-Type: application/json';
+
+        $options[CURLOPT_POST] = true;
+        $options[CURLOPT_HTTPHEADER] = $headers;
+        $options[CURLOPT_POSTFIELDS] = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    $ch = curl_init($url);
+
+    if ($ch === false) {
+        homeJson([
+            'success' => false,
+            'error_code' => 'CURL_INIT_FAILED',
+            'message' => 'Cannot initialize cURL'
+        ], 500);
+    }
+
+    curl_setopt_array($ch, $options);
+
+    $rawResponse = curl_exec($ch);
+    $curlError = curl_error($ch);
+    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    curl_close($ch);
+
+    if ($rawResponse === false) {
+        homeJson([
+            'success' => false,
+            'error_code' => 'API_PROXY_CURL_ERROR',
+            'message' => $curlError !== '' ? $curlError : 'Cannot call backend API',
+            'api_url' => $url
+        ], 502);
+    }
+
+    $decoded = json_decode($rawResponse, true);
+
+    if (!is_array($decoded)) {
+        homeJson([
+            'success' => false,
+            'error_code' => 'API_PROXY_INVALID_JSON',
+            'message' => 'Backend API did not return JSON',
+            'api_url' => $url,
+            'raw_response' => $rawResponse
+        ], 502);
+    }
+
+    http_response_code($httpCode > 0 ? $httpCode : 200);
+    header('Content-Type: application/json; charset=utf-8');
+
+    echo $rawResponse;
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_GET['home_ajax'] ?? '') === '1') {
+    $input = homeReadJson();
+
+    $action = $input['action'] ?? '';
+    $token = trim((string)($input['access_token'] ?? ''));
+
+    if ($token === '') {
+        homeJson([
+            'success' => false,
+            'error_code' => 'UNAUTHENTICATED',
+            'message' => 'Access token is required'
+        ], 401);
+    }
+
+    if ($action === 'me') {
+        homeForwardToApi('GET', '/users/me', $token);
+    }
+
+    if ($action === 'logout') {
+        homeForwardToApi('POST', '/auth/logout', $token, []);
+    }
+
+    homeJson([
+        'success' => false,
+        'error_code' => 'INVALID_ACTION',
+        'message' => 'Invalid home action'
+    ], 400);
+}
+
+$appBasePath = homeAppBasePath();
+$publicBasePath = $appBasePath . '/public';
+
+$homeProxyUrl = ($_SERVER['SCRIPT_NAME'] ?? '') . '?home_ajax=1';
+$loginUrl = $appBasePath . '/views/auth/user-login.php';
+$homeUrl = $appBasePath . '/views/user/home.php';
+$accountAnchorUrl = $homeUrl . '#account';
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -428,75 +627,18 @@
   <!-- ======================================================
        JAVASCRIPT
   ====================================================== -->
+  
+
   <script>
-  (function () {
-    'use strict';
+  window.HOME_CONFIG = {
+    homeProxyUrl: <?= json_encode($homeProxyUrl) ?>,
+    loginUrl: <?= json_encode($loginUrl) ?>,
+    homeUrl: <?= json_encode($homeUrl) ?>,
+    accountUrl: <?= json_encode($accountAnchorUrl) ?>
+  };
+</script>
 
-    /* ---------- Add to cart buttons ---------- */
-    document.querySelectorAll('.home-product-card__cart-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        const productId = btn.dataset.productId;
-        if (!productId) return;
-
-        btn.disabled = true;
-        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;animation:spin .6s linear infinite"><polyline points="23 4 23 10 17 10"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10"/></svg>';
-
-        // Replace with actual fetch to /api/cart/add
-        fetch('/api/cart/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ product_id: productId, quantity: 1 }),
-        })
-        .then(function (res) { return res.json(); })
-        .then(function (data) {
-          if (data.success) {
-            btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><polyline points="20 6 9 17 4 12"/></svg>';
-            btn.style.backgroundColor = 'var(--color-success)';
-            setTimeout(function () {
-              btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
-              btn.style.backgroundColor = '';
-              btn.disabled = false;
-            }, 1800);
-          } else {
-            btn.disabled = false;
-            resetCartBtn(btn);
-          }
-        })
-        .catch(function () {
-          btn.disabled = false;
-          resetCartBtn(btn);
-        });
-      });
-    });
-
-    function resetCartBtn(btn) {
-      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
-    }
-
-    /* ---------- Newsletter ---------- */
-    var newsletterBtn  = document.getElementById('newsletterSubmit');
-    var newsletterNote = document.getElementById('newsletterNote');
-
-    newsletterBtn.addEventListener('click', function () {
-      var email = document.getElementById('newsletter-email').value.trim();
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        newsletterNote.textContent = 'Please enter a valid email address.';
-        newsletterNote.style.color = 'rgba(255,200,200,0.95)';
-        return;
-      }
-      newsletterBtn.textContent = 'Subscribing…';
-      newsletterBtn.disabled = true;
-
-      // Replace with actual endpoint
-      setTimeout(function () {
-        newsletterNote.textContent = 'You\'re in! Check your inbox for a welcome treat.';
-        newsletterNote.style.color = 'rgba(255,255,255,0.95)';
-        newsletterBtn.textContent = 'Subscribed!';
-      }, 1000);
-    });
-
-  })();
-  </script>
+<script src="<?= htmlspecialchars($publicBasePath) ?>/assets/js/home.js?v=<?= time() ?>" defer></script>
 
 </body>
 </html>
