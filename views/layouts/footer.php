@@ -206,7 +206,7 @@ $activePage = $activePage ?? '';
     <!-- Col 2: Pages -->
     <div class="site-footer__col">
       <p class="site-footer__col-title">Pages</p>
-      <a href="../../views/user/index.php"    class="site-footer__link">Home</a>
+      <a href="../../views/user/home.php"    class="site-footer__link">Home</a>
       <a href="../../views/user/products.php" class="site-footer__link">Products</a>
       <a href="../../views/user/policies.php" class="site-footer__link">Policies</a>
       <a href="../../views/user/contact.php" class="site-footer__link">Contact</a>
