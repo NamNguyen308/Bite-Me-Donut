@@ -317,60 +317,41 @@
         <div class="home-gallery__cell home-gallery__cell--tall" role="listitem">
           <img class="home-gallery__img" src="../../public/assets/img/home6.jpg" alt="Tower of assorted donuts" width="320" height="460" loading="lazy" />
           <div class="home-gallery__cell-overlay" aria-hidden="true">
-            <svg class="home-gallery__cell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
+            
           </div>
         </div>
         <!-- cell 2 -->
         <div class="home-gallery__cell" role="listitem">
           <img class="home-gallery__img" src="../../public/assets/img/home7.jpg" alt="Pink glazed donut close-up" width="320" height="220" loading="lazy" />
           <div class="home-gallery__cell-overlay" aria-hidden="true">
-            <svg class="home-gallery__cell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
+            
           </div>
         </div>
         <!-- cell 3: wide (spans 2 cols) -->
         <div class="home-gallery__cell home-gallery__cell--wide" role="listitem">
           <img class="home-gallery__img" src="../../public/assets/img/home8.jpg" alt="Full donut menu flat-lay" width="640" height="220" loading="lazy" />
           <div class="home-gallery__cell-overlay" aria-hidden="true">
-            <svg class="home-gallery__cell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
+            
           </div>
         </div>
         <!-- cell 4 -->
         <div class="home-gallery__cell" role="listitem">
           <img class="home-gallery__img" src="../../public/assets/img/home9.jpg" alt="Chocolate frosted donut with sprinkles" width="320" height="220" loading="lazy" />
           <div class="home-gallery__cell-overlay" aria-hidden="true">
-            <svg class="home-gallery__cell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
+            
           </div>
         </div>
         <!-- cell 5 -->
         <div class="home-gallery__cell" role="listitem">
           <img class="home-gallery__img" src="../../public/assets/img/home10.jpg" alt="Matcha glazed donut" width="320" height="220" loading="lazy" />
           <div class="home-gallery__cell-overlay" aria-hidden="true">
-            <svg class="home-gallery__cell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
+            
           </div>
         </div>
         <!-- cell 6 -->
         <div class="home-gallery__cell" role="listitem">
           <img class="home-gallery__img" src="../../public/assets/img/home11.jpg" alt="Donut gift box packaging" width="320" height="220" loading="lazy" />
           <div class="home-gallery__cell-overlay" aria-hidden="true">
-            <svg class="home-gallery__cell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
           </div>
         </div>
       </div><!-- /.home-gallery__mosaic -->
