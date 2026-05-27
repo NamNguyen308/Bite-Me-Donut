@@ -26,7 +26,7 @@ $pageTitle = 'Login';
  * >>> Chỉnh lại đường dẫn cho khớp cấu trúc thật của bạn nếu khác,
  *     ví dụ: '/../layouts/header.php' hoặc '/../partials/header.php'.
  */
-require_once __DIR__ . '/../partials/header.php';
+require_once __DIR__ . '/../layouts/header.php';
 ?>
 
 <!--
@@ -71,7 +71,7 @@ require_once __DIR__ . '/../partials/header.php';
 
       <!-- Phone hoặc Email -->
       <div class="form-group">
-        <label class="form-label" for="login-identifier">Số điện thoại hoặc Email</label>
+        <label class="form-label" for="login-identifier">Phone Number or Email</label>
         <div class="input-wrap">
           <span class="input-wrap__icon" aria-hidden="true">
             <!-- Icon người dùng (SVG) -->
@@ -87,7 +87,7 @@ require_once __DIR__ . '/../partials/header.php';
             id="login-identifier"
             name="login"
             class="form-input has-icon"
-            placeholder="Nhập số điện thoại hoặc email"
+            placeholder="Enter your phone number or email"
             autocomplete="username"
             inputmode="text"
             required>
@@ -139,7 +139,7 @@ require_once __DIR__ . '/../partials/header.php';
 
       <!-- Hàng phụ: quên mật khẩu -->
       <div class="auth-form__row">
-        <a class="auth-link" href="/forgot-password.php">Forgot your password?</a>
+        <a class="auth-link" href="../../views/auth/forgot_password.php">Forgot your password?</a>
       </div>
 
       <!-- Nút submit -->
@@ -153,7 +153,7 @@ require_once __DIR__ . '/../partials/header.php';
     <footer class="auth-card__foot">
       <p class="text-muted text-center">
         Don't have an account?
-        <a class="auth-link" href="/register-user.php">Register now</a>
+        <a class="auth-link" href="../../views/auth/user-register.php">Register now</a>
       </p>
     </footer>
 
@@ -171,5 +171,5 @@ require_once __DIR__ . '/../partials/header.php';
  * Footer dùng chung của dự án.
  * >>> Chỉnh lại đường dẫn cho khớp cấu trúc thật của bạn nếu khác.
  */
-require_once __DIR__ . '/../partials/footer.php';
+require_once __DIR__ . '/../layouts/footer.php';
 ?>

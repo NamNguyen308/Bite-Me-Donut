@@ -7,7 +7,7 @@
  */
 
 $pageTitle = 'Register';
-require_once __DIR__ . '/../partials/header.php';
+require_once __DIR__ . '/../layouts/header.php';
 ?>
 
 <link rel="stylesheet" href="../../public/assets/css/root.css">
@@ -42,7 +42,7 @@ require_once __DIR__ . '/../partials/header.php';
 
       <!-- Phone hoặc Email -->
       <div class="form-group">
-        <label class="form-label" for="register-identifier">Số điện thoại hoặc Email</label>
+        <label class="form-label" for="register-identifier">Phone Number or Email</label>
         <div class="input-wrap">
           <span class="input-wrap__icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
@@ -57,7 +57,7 @@ require_once __DIR__ . '/../partials/header.php';
             id="register-identifier"
             name="identifier"
             class="form-input has-icon"
-            placeholder="Nhập số điện thoại hoặc email"
+            placeholder="Enter your phone number or email"
             autocomplete="username"
             inputmode="text"
             required>
@@ -161,5 +161,5 @@ require_once __DIR__ . '/../partials/header.php';
 <script src="../../public/assets/js/user-register.js" defer></script>
 
 <?php
-require_once __DIR__ . '/../partials/footer.php';
+require_once __DIR__ . '/../layouts/footer.php';
 ?>

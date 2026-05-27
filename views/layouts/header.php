@@ -248,7 +248,7 @@ $activePage = $activePage ?? '';
     <div class="site-header__cell site-header__actions">
 
       <!-- User -->
-      <a href="../../views/auth/login.php"
+      <a href="../../views/auth/user-login.php"
          class="site-header__icon-btn"
          aria-label="Tài khoản">
         <svg xmlns="http://www.w3.org/2000/svg"
