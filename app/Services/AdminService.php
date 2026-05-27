@@ -6,6 +6,7 @@ use App\Repositories\UserRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\RiskLogRepository;
+use App\Services\TokenService;
 
 class AdminService
 {
