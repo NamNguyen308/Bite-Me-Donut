@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent = 'Logging in...';
 
         try {
-            const response = await fetch('/api/admin/login', {
+            const response = await fetch('/Bite-Me-Donut/public/api/admin/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const data = await response.json();
 
-            if (data.status === 'success') {
+            if (data.success) {
                 // Save token
                 localStorage.setItem('bmd_access_token', data.data.access_token);
                 localStorage.setItem('bmd_user', JSON.stringify(data.data.user));

@@ -12,12 +12,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load orders
     async function loadOrders() {
         try {
-            const res = await fetch('/api/admin/orders', {
+            const res = await fetch('/Bite-Me-Donut/public/api/admin/orders', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
             
-            if (data.status === 'success') {
+            if (data.success) {
                 renderTable(data.data.orders);
             }
         } catch (err) {
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const status = document.getElementById('o-status').value;
 
         try {
-            await fetch(`/api/admin/orders/${id}/status`, {
+            await fetch(`/Bite-Me-Donut/public/api/admin/orders/${id}/status`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

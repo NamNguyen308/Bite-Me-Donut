@@ -14,12 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load products
     async function loadProducts() {
         try {
-            const res = await fetch('/api/admin/products', {
+            const res = await fetch('/Bite-Me-Donut/public/api/admin/products', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
             
-            if (data.status === 'success') {
+            if (data.success) {
                 renderTable(data.data.products);
             }
         } catch (err) {
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Delete Product
     async function deleteProduct(id) {
         try {
-            await fetch(`/api/admin/products/${id}`, {
+            await fetch(`/Bite-Me-Donut/public/api/admin/products/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const method = isEditMode ? 'POST' : 'POST'; // using POST for both store and update as per routes
-        const url = isEditMode ? `/api/admin/products/${id}` : '/api/admin/products';
+        const url = isEditMode ? `/Bite-Me-Donut/public/api/admin/products/${id}` : '/Bite-Me-Donut/public/api/admin/products';
 
         try {
             await fetch(url, {

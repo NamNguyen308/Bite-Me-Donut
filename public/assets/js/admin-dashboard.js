@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Fetch dashboard data
     try {
-        const response = await fetch('/api/admin/dashboard', {
+        const response = await fetch('/Bite-Me-Donut/public/api/admin/dashboard', {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const data = await response.json();
         
-        if (data.status === 'success') {
+        if (data.success) {
             const d = data.data.dashboard;
             document.getElementById('kpi-orders').textContent = d.total_orders;
             document.getElementById('kpi-revenue').textContent = '$' + Number(d.total_revenue).toFixed(2);

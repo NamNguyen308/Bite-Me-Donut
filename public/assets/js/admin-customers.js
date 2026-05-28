@@ -12,12 +12,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load customers
     async function loadCustomers() {
         try {
-            const res = await fetch('/api/admin/customers', {
+            const res = await fetch('/Bite-Me-Donut/public/api/admin/customers', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
             
-            if (data.status === 'success') {
+            if (data.success) {
                 renderTable(data.data.customers);
             }
         } catch (err) {
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Delete Customer
     async function deleteCustomer(id) {
         try {
-            await fetch(`/api/admin/customers/${id}`, {
+            await fetch(`/Bite-Me-Donut/public/api/admin/customers/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            await fetch('/api/admin/customers', {
+            await fetch('/Bite-Me-Donut/public/api/admin/customers', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
