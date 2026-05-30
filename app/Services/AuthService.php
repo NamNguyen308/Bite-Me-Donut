@@ -27,125 +27,191 @@ class AuthService
     }
 
     public function login(array $data, ?string $ipAddress, ?string $userAgent): array
-    {
-        $errors = $this->validationService->validateLogin($data);
+{
+    /*
+     * Support cả 2 kiểu payload:
+     * - { identifier, password } từ user-login.js
+     * - { phone/email, password } từ API cũ
+     */
+    $identifier = trim((string)($data['identifier'] ?? ''));
 
-        if (!empty($errors)) {
-            return [
-                'success' => false,
-                'status_code' => 400,
-                'error_code' => 'VALIDATION_ERROR',
-                'message' => 'Invalid request data',
-                'errors' => $errors
-            ];
+    if ($identifier !== '') {
+        if (str_contains($identifier, '@')) {
+            $data['email'] = $identifier;
+            $data['phone'] = $data['phone'] ?? '';
+        } else {
+            $data['phone'] = preg_replace('/[\s\-\(\)]/', '', $identifier);
+            $data['email'] = $data['email'] ?? '';
         }
+    }
 
-        $phone = trim($data['phone'] ?? '');
-        $email = trim($data['email'] ?? '');
-        $password = trim($data['password'] ?? '');
+    $errors = $this->validationService->validateLogin($data);
 
-        $user = $this->userRepository->findByPhoneOrEmail($phone, $email);
+    if (!empty($errors)) {
+        return [
+            'success' => false,
+            'status_code' => 400,
+            'error_code' => 'VALIDATION_ERROR',
+            'message' => 'Invalid request data',
+            'errors' => $errors
+        ];
+    }
 
-        if (!$user) {
-            $this->loginAttemptRepository->create(
-                null,
-                $phone !== '' ? $phone : null,
-                $email !== '' ? $email : null,
-                $ipAddress,
-                $userAgent,
-                'FAILED',
-                'USER_NOT_FOUND'
-            );
+    $phone = trim((string)($data['phone'] ?? ''));
+    $email = trim((string)($data['email'] ?? ''));
+    $password = (string)($data['password'] ?? '');
 
-            return [
-                'success' => false,
-                'status_code' => 401,
-                'error_code' => 'INVALID_CREDENTIALS',
-                'message' => 'Phone/email or password is incorrect'
-            ];
-        }
+    $user = $this->userRepository->findByPhoneOrEmail($phone, $email);
 
-        if ((int) $user['is_active'] !== 1) {
-            return [
-                'success' => false,
-                'status_code' => 403,
-                'error_code' => 'ACCOUNT_INACTIVE',
-                'message' => 'Account is inactive'
-            ];
-        }
-
-        if (!password_verify($password, $user['password_hash'])) {
-            $this->loginAttemptRepository->create(
-                (int) $user['id'],
-                $phone !== '' ? $phone : $user['phone'],
-                $email !== '' ? $email : $user['email'],
-                $ipAddress,
-                $userAgent,
-                'FAILED',
-                'INVALID_PASSWORD'
-            );
-
-            $this->ruleEngineService->evaluateFailedPassword(
-                (int) $user['id'],
-                $phone !== '' ? $phone : $user['phone'],
-                $email !== '' ? $email : $user['email'],
-                $ipAddress,
-                $userAgent
-            );
-
-            return [
-                'success' => false,
-                'status_code' => 401,
-                'error_code' => 'INVALID_CREDENTIALS',
-                'message' => 'Phone/email or password is incorrect'
-            ];
-        }
-
+    if (!$user) {
         $this->loginAttemptRepository->create(
-            (int) $user['id'],
-            $phone !== '' ? $phone : $user['phone'],
-            $email !== '' ? $email : $user['email'],
+            null,
+            $phone !== '' ? $phone : null,
+            $email !== '' ? $email : null,
             $ipAddress,
             $userAgent,
-            'SUCCESS',
-            'LOGIN_SUCCESS'
+            'FAILED',
+            'USER_NOT_FOUND'
         );
 
-        $challengeId = $this->generateUuid();
+        return [
+            'success' => false,
+            'status_code' => 401,
+            'error_code' => 'INVALID_CREDENTIALS',
+            'message' => 'Phone/email or password is incorrect'
+        ];
+    }
 
-        $expireMinutes = (int) Config::get('LOGIN_CHALLENGE_EXPIRE_MINUTES', 10);
-        $expiresAt = date('Y-m-d H:i:s', time() + ($expireMinutes * 60));
+    if ((int)$user['is_active'] !== 1) {
+        return [
+            'success' => false,
+            'status_code' => 403,
+            'error_code' => 'ACCOUNT_INACTIVE',
+            'message' => 'Account is inactive'
+        ];
+    }
 
-        $this->loginChallengeRepository->create(
-            $challengeId,
-            (int) $user['id'],
-            'PENDING_OTP',
-            $expiresAt,
+    if (!password_verify($password, (string)$user['password_hash'])) {
+        $this->loginAttemptRepository->create(
+            (int)$user['id'],
+            $phone !== '' ? $phone : ($user['phone'] ?? null),
+            $email !== '' ? $email : ($user['email'] ?? null),
+            $ipAddress,
+            $userAgent,
+            'FAILED',
+            'INVALID_PASSWORD'
+        );
+
+        $this->ruleEngineService->evaluateFailedPassword(
+            (int)$user['id'],
+            $phone !== '' ? $phone : ($user['phone'] ?? null),
+            $email !== '' ? $email : ($user['email'] ?? null),
             $ipAddress,
             $userAgent
         );
-        $challenge = $this->loginChallengeRepository->findById($challengeId);
 
-if ($challenge) {
-    $this->ruleEngineService->attachRecentFailedPasswordRiskToChallenge(
-        $challenge,
-        $phone !== '' ? $phone : $user['phone'],
-        $email !== '' ? $email : $user['email'],
+        return [
+            'success' => false,
+            'status_code' => 401,
+            'error_code' => 'INVALID_CREDENTIALS',
+            'message' => 'Phone/email or password is incorrect'
+        ];
+    }
+
+    $this->loginAttemptRepository->create(
+        (int)$user['id'],
+        $phone !== '' ? $phone : ($user['phone'] ?? null),
+        $email !== '' ? $email : ($user['email'] ?? null),
         $ipAddress,
-        $userAgent
+        $userAgent,
+        'SUCCESS',
+        'LOGIN_SUCCESS'
     );
-}
+
+    /*
+     * ADMIN FLOW:
+     * Admin nhập đúng email/password thì tạo access token ngay.
+     * Không tạo login_challenge.
+     * Không OTP.
+     * Không Twilio call.
+     */
+    if (($user['role'] ?? '') === 'admin') {
+        $token = $this->tokenService->createAccessToken((int)$user['id']);
 
         return [
             'success' => true,
             'status_code' => 200,
-            'message' => 'PASSWORD_VERIFIED',
+            'message' => 'ADMIN_LOGIN_SUCCESS',
             'data' => [
-                'login_challenge_id' => $challengeId,
-                'status' => 'PENDING_OTP'
+                'requires_otp' => false,
+                'redirect_to' => 'admin_dashboard',
+                'access_token' => $token['plain_token'],
+                'token_type' => 'Bearer',
+                'expires_in' => $token['expires_in'] ?? null,
+                'expires_at' => $token['expires_at'] ?? null,
+                'user' => [
+                    'id' => (int)$user['id'],
+                    'name' => $user['name'] ?? null,
+                    'email' => $user['email'] ?? null,
+                    'phone' => $user['phone'] ?? null,
+                    'role' => $user['role'],
+                    'is_active' => (int)$user['is_active'],
+                    'created_at' => $user['created_at'] ?? null,
+                    'updated_at' => $user['updated_at'] ?? null
+                ]
             ]
         ];
     }
+
+    /*
+     * CUSTOMER FLOW:
+     * Customer vẫn phải qua OTP.
+     */
+    $challengeId = $this->generateUuid();
+
+    $expireMinutes = (int)Config::get('LOGIN_CHALLENGE_EXPIRE_MINUTES', 10);
+    $expiresAt = date('Y-m-d H:i:s', time() + ($expireMinutes * 60));
+
+    $this->loginChallengeRepository->create(
+        $challengeId,
+        (int)$user['id'],
+        'PENDING_OTP',
+        $expiresAt,
+        $ipAddress,
+        $userAgent
+    );
+
+    $challenge = $this->loginChallengeRepository->findById($challengeId);
+
+    if ($challenge) {
+        $this->ruleEngineService->attachRecentFailedPasswordRiskToChallenge(
+            $challenge,
+            $phone !== '' ? $phone : ($user['phone'] ?? null),
+            $email !== '' ? $email : ($user['email'] ?? null),
+            $ipAddress,
+            $userAgent
+        );
+    }
+
+    return [
+        'success' => true,
+        'status_code' => 200,
+        'message' => 'PASSWORD_VERIFIED',
+        'data' => [
+            'requires_otp' => true,
+            'login_challenge_id' => $challengeId,
+            'status' => 'PENDING_OTP',
+            'user' => [
+                'id' => (int)$user['id'],
+                'name' => $user['name'] ?? null,
+                'email' => $user['email'] ?? null,
+                'phone' => $user['phone'] ?? null,
+                'role' => $user['role'],
+                'is_active' => (int)$user['is_active']
+            ]
+        ]
+    ];
+}
 
     private function generateUuid(): string
     {

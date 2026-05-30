@@ -78,20 +78,22 @@ class AdminController
     }
 
     private function sendResult(array $result): void
-    {
-        if ($result['success'] === true) {
-            Response::success(
-                $result['message'],
-                $result['data'],
-                $result['status_code']
-            );
-        }
-
-        Response::error(
-            $result['error_code'],
+{
+    if ($result['success'] === true) {
+        Response::success(
             $result['message'],
-            $result['status_code'],
-            $result['errors'] ?? []
+            $result['data'] ?? [],
+            $result['status_code']
         );
+
+        return;
     }
+
+    Response::error(
+        $result['error_code'],
+        $result['message'],
+        $result['status_code'],
+        $result['errors'] ?? []
+    );
+}
 }

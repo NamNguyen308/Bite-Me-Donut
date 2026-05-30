@@ -5,11 +5,15 @@
 
   const LOGIN_PROXY_URL = CONFIG.loginProxyUrl || `${window.location.pathname}?login_ajax=1`;
   const OTP_PAGE_URL = CONFIG.otpPageUrl || './otp.php';
+  const ADMIN_DASHBOARD_URL = CONFIG.adminDashboardUrl || `${getAppBasePath()}/views/admin/dashboard.php`;
 
   const STORAGE_KEYS = {
     challengeId: 'login_challenge_id',
     identifier: 'login_identifier'
   };
+
+  const TOKEN_KEYS = ['access_token', 'auth_token', 'bmd_access_token'];
+  const USER_KEYS = ['auth_user', 'current_user', 'user', 'bmd_user'];
 
   const ERROR_MESSAGES = {
     VALIDATION_ERROR: 'Information is invalid. Please try again.',
@@ -31,6 +35,20 @@
   const togglePasswordBtn = document.getElementById('toggle-password');
 
   if (!form) return;
+
+  function getAppBasePath() {
+    const path = window.location.pathname;
+
+    if (path.includes('/views/')) {
+      return path.split('/views/')[0];
+    }
+
+    if (path.includes('/public/')) {
+      return path.split('/public/')[0];
+    }
+
+    return '';
+  }
 
   function messageFor(errorCode, fallbackMessage) {
     if (errorCode && ERROR_MESSAGES[errorCode]) {
@@ -81,20 +99,12 @@
     if (spinner) {
       spinner.classList.toggle('hidden', !isLoading);
     }
-  }
 
-  if (togglePasswordBtn) {
-    togglePasswordBtn.addEventListener('click', function () {
-      const isHidden = passwordInput.type === 'password';
+    const text = submitBtn.querySelector('[data-submit-text]');
 
-      passwordInput.type = isHidden ? 'text' : 'password';
-
-      togglePasswordBtn.setAttribute('aria-pressed', String(isHidden));
-      togglePasswordBtn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
-
-      togglePasswordBtn.querySelector('.icon-eye')?.classList.toggle('hidden', isHidden);
-      togglePasswordBtn.querySelector('.icon-eye-off')?.classList.toggle('hidden', !isHidden);
-    });
+    if (text) {
+      text.textContent = isLoading ? 'Logging in...' : 'Login';
+    }
   }
 
   function normalizeIdentifier(identifier) {
@@ -105,6 +115,23 @@
     }
 
     return value.replace(/[\s\-\(\)]/g, '');
+  }
+
+  function buildLoginPayload(identifier, password) {
+    const payload = {
+      identifier,
+      password
+    };
+
+    if (identifier.includes('@')) {
+      payload.email = identifier;
+      payload.phone = '';
+    } else {
+      payload.phone = identifier;
+      payload.email = '';
+    }
+
+    return payload;
   }
 
   function validateInput(identifier, password) {
@@ -123,11 +150,88 @@
     return ok;
   }
 
+  function clearLoginChallenge() {
+    sessionStorage.removeItem(STORAGE_KEYS.challengeId);
+    sessionStorage.removeItem(STORAGE_KEYS.identifier);
+    sessionStorage.removeItem('otp_expires_in');
+    sessionStorage.removeItem('sms_provider');
+  }
+
+  function saveAuthenticatedSession(accessToken, user) {
+    if (!accessToken) {
+      throw {
+        code: '_DEFAULT',
+        message: 'Access token was not returned by server.'
+      };
+    }
+
+    TOKEN_KEYS.forEach(function (key) {
+      localStorage.setItem(key, accessToken);
+    });
+
+    localStorage.setItem('is_logged_in', '1');
+
+    if (user) {
+      const userJson = JSON.stringify(user);
+
+      USER_KEYS.forEach(function (key) {
+        localStorage.setItem(key, userJson);
+      });
+    }
+  }
+
+  function extractResponseData(response) {
+    return response?.data || response || {};
+  }
+
+  function extractUser(responseData) {
+    if (!responseData) return null;
+
+    if (responseData.user) {
+      return responseData.user;
+    }
+
+    if (responseData.data && responseData.data.user) {
+      return responseData.data.user;
+    }
+
+    return null;
+  }
+
+  function extractAccessToken(responseData) {
+    return (
+      responseData.access_token ||
+      responseData.token ||
+      responseData.accessToken ||
+      responseData.data?.access_token ||
+      responseData.data?.token ||
+      null
+    );
+  }
+
+  function pickChallengeId(responseData) {
+    if (!responseData) return null;
+
+    return (
+      responseData.login_challenge_id ||
+      responseData.challenge_id ||
+      responseData.data?.login_challenge_id ||
+      responseData.data?.challenge_id ||
+      responseData.challenge?.id ||
+      null
+    );
+  }
+
+  function shouldUseOtp(responseData) {
+    if (responseData.requires_otp === true || responseData.requiresOtp === true) {
+      return true;
+    }
+
+    return !!pickChallengeId(responseData);
+  }
+
   async function postLogin(identifier, password) {
-    const payload = {
-      identifier,
-      password
-    };
+    const payload = buildLoginPayload(identifier, password);
 
     console.log('[LOGIN POST]', LOGIN_PROXY_URL, payload);
 
@@ -167,11 +271,18 @@
     return data;
   }
 
-  function pickChallengeId(data) {
-    if (!data) return null;
-    if (data.login_challenge_id) return data.login_challenge_id;
-    if (data.data && data.data.login_challenge_id) return data.data.login_challenge_id;
-    return null;
+  if (togglePasswordBtn) {
+    togglePasswordBtn.addEventListener('click', function () {
+      const isHidden = passwordInput.type === 'password';
+
+      passwordInput.type = isHidden ? 'text' : 'password';
+
+      togglePasswordBtn.setAttribute('aria-pressed', String(isHidden));
+      togglePasswordBtn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+
+      togglePasswordBtn.querySelector('.icon-eye')?.classList.toggle('hidden', isHidden);
+      togglePasswordBtn.querySelector('.icon-eye-off')?.classList.toggle('hidden', !isHidden);
+    });
   }
 
   form.addEventListener('submit', async function (event) {
@@ -190,8 +301,36 @@
     setLoading(true);
 
     try {
-      const data = await postLogin(identifier, password);
-      const challengeId = pickChallengeId(data);
+      const response = await postLogin(identifier, password);
+      const responseData = extractResponseData(response);
+      const user = extractUser(responseData);
+      const accessToken = extractAccessToken(responseData);
+
+      /*
+       * ADMIN FLOW:
+       * Admin login thành công sẽ có role admin + access_token.
+       * Không OTP.
+       */
+      if (user && user.role === 'admin') {
+        saveAuthenticatedSession(accessToken, user);
+        clearLoginChallenge();
+
+        window.location.href = ADMIN_DASHBOARD_URL;
+        return;
+      }
+
+      /*
+       * CUSTOMER FLOW:
+       * Customer phải có login_challenge_id để qua OTP.
+       */
+      if (!shouldUseOtp(responseData)) {
+        throw {
+          code: '_DEFAULT',
+          message: 'Login response is missing OTP challenge data.'
+        };
+      }
+
+      const challengeId = pickChallengeId(responseData);
 
       if (!challengeId) {
         throw {
@@ -217,6 +356,6 @@
   });
 
   [identifierInput, passwordInput].forEach(function (input) {
-    input.addEventListener('input', hideAlert);
+    input?.addEventListener('input', hideAlert);
   });
 })();

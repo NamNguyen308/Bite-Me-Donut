@@ -601,12 +601,17 @@ $changePasswordUrl = $appBasePath . '/views/auth/change_password.php';
         <div class="sidebar-nav__divider"></div>
 
         <!-- Logout -->
-        <button class="sidebar-nav__item sidebar-nav__item--logout" id="sidebarLogoutBtn">
-          <span class="sidebar-nav__icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </span>
-          <span class="sidebar-nav__label">Logout</span>
-        </button>
+       <button
+  type="button"
+  class="sidebar-nav__item sidebar-nav__item--logout"
+  id="sidebarLogoutBtn"
+  data-logout-trigger
+>
+  <span class="sidebar-nav__icon">
+    <!-- icon -->
+  </span>
+  <span class="sidebar-nav__label">Logout</span>
+</button>
 
       </nav>
     </aside><!-- /.profile-sidebar -->
@@ -831,10 +836,15 @@ $changePasswordUrl = $appBasePath . '/views/auth/change_password.php';
                     <p class="security-item__desc" id="sessionDesc">Token is valid</p>
                   </div>
                 </div>
-                <button class="btn btn--danger btn--sm" id="revokeBtn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                  Logout
-                </button>
+
+                <button
+  type="button"
+  class="btn btn--danger"
+  id="revokeBtn"
+  data-logout-trigger
+>
+  Logout
+</button>
               </div>
 
             </div>
@@ -863,6 +873,7 @@ $changePasswordUrl = $appBasePath . '/views/auth/change_password.php';
         Are you sure you want to logout?<br/>Your token will be revoked immediately.
       </p>
       <div class="flex gap-4">
+
         <button class="btn btn--danger w-full" id="confirmLogoutBtn">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Logout
@@ -886,5 +897,6 @@ $changePasswordUrl = $appBasePath . '/views/auth/change_password.php';
 </script>
 
 <script src="<?= htmlspecialchars($publicBasePath) ?>/assets/js/customer_profile.js?v=<?= time() ?>" defer></script>  
+
 </body>
 </html>

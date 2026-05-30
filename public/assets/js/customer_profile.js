@@ -7,16 +7,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const LOGIN_URL = CONFIG.loginUrl || '../auth/user-login.php';
   const HOME_URL = CONFIG.homeUrl || './home.php';
 
-  const TOKEN_KEYS = ['access_token', 'auth_token'];
-  const USER_KEYS = ['auth_user', 'current_user', 'user'];
+  const TOKEN_KEYS = ['access_token', 'auth_token', 'bmd_access_token'];
+  const USER_KEYS = ['auth_user', 'current_user', 'user', 'bmd_user'];
 
   const pageLoader = document.getElementById('pageLoader');
   const profileError = document.getElementById('profileError');
   const profileErrorMsg = document.getElementById('profileErrorMsg');
   const profileContent = document.getElementById('profileContent');
 
-  const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
-  const revokeBtn = document.getElementById('revokeBtn');
   const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
   const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
   const logoutModalClose = document.getElementById('logoutModalClose');
@@ -36,10 +34,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     editForm?.querySelector('button[type="submit"]');
 
   let currentUser = null;
+  let isLoggingOut = false;
 
   function getToken() {
     for (const key of TOKEN_KEYS) {
-      const value = localStorage.getItem(key);
+      const value = localStorage.getItem(key) || sessionStorage.getItem(key);
 
       if (value) {
         return value;
@@ -60,10 +59,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function clearSession() {
-    TOKEN_KEYS.forEach((key) => localStorage.removeItem(key));
-    USER_KEYS.forEach((key) => localStorage.removeItem(key));
+    TOKEN_KEYS.forEach((key) => {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    });
+
+    USER_KEYS.forEach((key) => {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    });
 
     localStorage.removeItem('is_logged_in');
+    sessionStorage.removeItem('is_logged_in');
 
     sessionStorage.removeItem('login_challenge_id');
     sessionStorage.removeItem('login_identifier');
@@ -113,10 +120,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     showElement(profileError);
-  }
-
-  function hideError() {
-    hideElement(profileError);
   }
 
   function showContent() {
@@ -320,6 +323,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     setValue('editPhone', phone === '—' ? '' : phone);
 
     saveUserToStorage(normalizedUser);
+
+    if (typeof window.updateGlobalHeaderAuth === 'function') {
+      window.updateGlobalHeaderAuth(normalizedUser);
+    }
+
     showContent();
   }
 
@@ -445,18 +453,35 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function openLogoutModal() {
-    if (logoutModal) {
-      logoutModal.classList.add('is-active');
+    if (!logoutModal) {
+      logout();
+      return;
     }
+
+    logoutModal.classList.add('is-active');
+    logoutModal.classList.add('is-open');
+    logoutModal.style.display = 'flex';
   }
 
   function closeLogoutModal() {
-    if (logoutModal) {
-      logoutModal.classList.remove('is-active');
-    }
+    if (!logoutModal) return;
+
+    logoutModal.classList.remove('is-active');
+    logoutModal.classList.remove('is-open');
+    logoutModal.style.display = '';
   }
 
   async function logout() {
+    if (isLoggingOut) return;
+
+    isLoggingOut = true;
+
+    if (confirmLogoutBtn) {
+      confirmLogoutBtn.disabled = true;
+      confirmLogoutBtn.dataset.originalText = confirmLogoutBtn.textContent;
+      confirmLogoutBtn.textContent = 'Logging out...';
+    }
+
     try {
       await postProfile('logout');
     } catch (error) {
@@ -464,19 +489,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     clearSession();
+
+    if (typeof window.updateGlobalHeaderAuth === 'function') {
+      window.updateGlobalHeaderAuth(null);
+    }
+
     window.location.href = LOGIN_URL;
   }
 
   function bindEvents() {
-    sidebarLogoutBtn?.addEventListener('click', openLogoutModal);
-    revokeBtn?.addEventListener('click', openLogoutModal);
+    document.addEventListener('click', (event) => {
+      const logoutTrigger = event.target.closest(
+        '[data-logout-trigger], #sidebarLogoutBtn, #revokeBtn, .js-logout-trigger'
+      );
 
-    cancelLogoutBtn?.addEventListener('click', closeLogoutModal);
-    logoutModalClose?.addEventListener('click', closeLogoutModal);
-    confirmLogoutBtn?.addEventListener('click', logout);
+      if (logoutTrigger) {
+        event.preventDefault();
+        openLogoutModal();
+        return;
+      }
 
-    logoutModal?.addEventListener('click', (event) => {
-      if (event.target === logoutModal) {
+      if (event.target.closest('#cancelLogoutBtn')) {
+        event.preventDefault();
+        closeLogoutModal();
+        return;
+      }
+
+      if (event.target.closest('#logoutModalClose')) {
+        event.preventDefault();
+        closeLogoutModal();
+        return;
+      }
+
+      if (event.target.closest('#confirmLogoutBtn')) {
+        event.preventDefault();
+        logout();
+        return;
+      }
+
+      if (logoutModal && event.target === logoutModal) {
         closeLogoutModal();
       }
     });

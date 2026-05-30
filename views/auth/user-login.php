@@ -327,10 +327,11 @@ require_once __DIR__ . '/../layouts/header.php';
 <script>
   window.USER_LOGIN_CONFIG = {
     loginProxyUrl: <?= json_encode($loginProxyUrl) ?>,
-    otpPageUrl: <?= json_encode($otpPageUrl) ?>
+    otpPageUrl: <?= json_encode($otpPageUrl) ?>,
+    adminDashboardUrl: <?= json_encode($appBasePath . '/views/admin/dashboard.php') ?>
   };
 </script>
 
-<script src="<?= htmlspecialchars($publicBasePath) ?>/assets/js/user-login.js" defer></script>
+<script src="<?= htmlspecialchars($publicBasePath) ?>/assets/js/user-login.js?v=<?= time() ?>" defer></script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

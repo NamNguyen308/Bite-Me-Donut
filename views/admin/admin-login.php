@@ -41,7 +41,6 @@
         </div>
     </main>
 
-    <script src="../../public/assets/js/api.js"></script>
     <script src="../../public/assets/js/admin-login.js"></script>
 </body>
 </html>
