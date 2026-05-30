@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const HOME_PROXY_URL = CONFIG.homeProxyUrl || `${window.location.pathname}?home_ajax=1`;
   const LOGIN_URL = CONFIG.loginUrl || '../auth/user-login.php';
-  const ACCOUNT_URL = CONFIG.accountUrl || '#account';
+  const PROFILE_URL = CONFIG.profileUrl || CONFIG.accountUrl || './customer_profile.php';
 
   const TOKEN_KEYS = ['access_token', 'auth_token'];
   const USER_KEYS = ['auth_user', 'current_user', 'user'];
@@ -52,12 +52,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     sessionStorage.removeItem('sms_provider');
   }
 
-  function setText(element, value) {
-    if (element) {
-      element.textContent = value;
-    }
-  }
-
   function getCachedUser() {
     for (const key of USER_KEYS) {
       const raw = localStorage.getItem(key);
@@ -76,6 +70,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     return null;
+  }
+
+  function getDisplayName(user) {
+    return String(user?.name || user?.full_name || user?.email || user?.phone || '').trim();
+  }
+
+  function getShortName(user) {
+    const displayName = getDisplayName(user);
+
+    if (!displayName) {
+      return 'Bạn';
+    }
+
+    if (displayName.includes('@')) {
+      return displayName.split('@')[0];
+    }
+
+    const parts = displayName.split(/\s+/);
+
+    return parts[parts.length - 1] || displayName;
+  }
+
+  function setText(element, value) {
+    if (element) {
+      element.textContent = value;
+    }
   }
 
   async function postHome(action, payload = {}) {
@@ -161,42 +181,109 @@ document.addEventListener('DOMContentLoaded', async () => {
     return null;
   }
 
-  function displayNameOf(user) {
-    return user?.name || user?.full_name || user?.email || user?.phone || 'Donut Lover';
-  }
+  function updateNavbarAccount(user = null) {
+    const token = getToken();
 
-  function findHeaderRoot() {
-    return document.querySelector('header') || document.body || document;
-  }
+    const accountLink = document.getElementById('nav-account-link');
+    const accountLabel = document.getElementById('nav-account-label');
+    const cartLink = document.getElementById('nav-cart-link');
 
-  function findLoginLinks() {
-    const root = findHeaderRoot();
+    if (accountLink) {
+      const loginUrl = accountLink.dataset.loginUrl || LOGIN_URL;
+      const profileUrl = accountLink.dataset.profileUrl || PROFILE_URL;
 
-    const selectors = [
-      '#nav-login-link',
-      '#header-login-link',
-      '#global-login-link',
-      'a[href*="user-login.php"]',
-      'a[href*="login.php"]',
-      'a[href*="login"]'
-    ];
+      if (token) {
+        const shortName = getShortName(user || getCachedUser());
 
-    const links = [];
+        accountLink.href = profileUrl;
+        accountLink.title = 'Tài khoản của tôi';
+        accountLink.dataset.authState = 'authenticated';
 
-    selectors.forEach((selector) => {
-      root.querySelectorAll(selector).forEach((element) => {
-        if (element.tagName === 'A' && !links.includes(element)) {
-          links.push(element);
+        if (accountLabel) {
+          accountLabel.textContent = `Xin chào ${shortName}`;
         }
-      });
-    });
+      } else {
+        accountLink.href = loginUrl;
+        accountLink.title = 'Đăng nhập';
+        accountLink.dataset.authState = 'guest';
 
-    return links;
+        if (accountLabel) {
+          accountLabel.textContent = '';
+        }
+      }
+    }
+
+    if (cartLink) {
+      const loginUrl = cartLink.dataset.loginUrl || LOGIN_URL;
+      const cartUrl = cartLink.dataset.cartUrl || './cart.php';
+
+      if (token) {
+        cartLink.href = cartUrl;
+        cartLink.dataset.authState = 'authenticated';
+      } else {
+        cartLink.href = loginUrl;
+        cartLink.dataset.authState = 'guest';
+      }
+    }
+
+    if (typeof window.updateGlobalHeaderAuth === 'function') {
+      window.updateGlobalHeaderAuth(user || getCachedUser());
+    }
   }
 
-  function findLogoutButtons() {
-    const root = findHeaderRoot();
+  function hideAccountPanel() {
+    const accountPanel = document.getElementById('account');
 
+    if (accountPanel) {
+      accountPanel.style.display = 'none';
+      accountPanel.innerHTML = '';
+    }
+
+    const possibleAccountCards = document.querySelectorAll(
+      '#user-profile-email, #user-profile-role, #home-panel-logout'
+    );
+
+    possibleAccountCards.forEach((element) => {
+      const section = element.closest('section');
+
+      if (section) {
+        section.style.display = 'none';
+      }
+    });
+  }
+
+  function renderLandingHome() {
+    const welcomeName = document.getElementById('welcome-name');
+    const welcomeMessage = document.getElementById('welcome-message');
+
+    setText(welcomeName, 'Welcome to Bite Me Donut!');
+    setText(welcomeMessage, 'Discover our delicious selection of fresh donuts and treats.');
+
+    hideAccountPanel();
+  }
+
+  function updateHomePublic() {
+    renderLandingHome();
+    updateNavbarAccount(null);
+  }
+
+  function updateHomeLoggedIn(user) {
+    renderLandingHome();
+    updateNavbarAccount(user);
+  }
+
+  async function handleLogout() {
+    try {
+      await postHome('logout');
+    } catch (error) {
+      console.warn('[home:logout]', error);
+    }
+
+    clearSession();
+    window.location.href = LOGIN_URL;
+  }
+
+  function bindLogoutButtons() {
     const selectors = [
       '#global-btn-logout',
       '#nav-logout-btn',
@@ -204,147 +291,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       '[data-action="logout"]'
     ];
 
-    const buttons = [];
-
     selectors.forEach((selector) => {
-      root.querySelectorAll(selector).forEach((element) => {
-        if (!buttons.includes(element)) {
-          buttons.push(element);
-        }
+      document.querySelectorAll(selector).forEach((button) => {
+        button.addEventListener('click', handleLogout);
       });
     });
-
-    return buttons;
-  }
-
-  function updateHeaderPublic() {
-    const loginLinks = findLoginLinks();
-    const logoutButtons = findLogoutButtons();
-
-    loginLinks.forEach((link) => {
-      link.href = LOGIN_URL;
-      link.title = 'Login';
-      link.dataset.authState = 'guest';
-
-      const text = link.textContent.trim();
-
-      if (text && !link.querySelector('svg') && !link.querySelector('i')) {
-        link.textContent = 'Login';
-      }
-
-      link.style.display = '';
-    });
-
-    logoutButtons.forEach((button) => {
-      button.style.display = 'none';
-    });
-
-    const navUserName = document.getElementById('nav-user-name');
-
-    if (navUserName) {
-      navUserName.textContent = '';
-    }
-  }
-
-  function updateHeaderLoggedIn(user) {
-    const name = displayNameOf(user);
-    const loginLinks = findLoginLinks();
-    const logoutButtons = findLogoutButtons();
-
-    loginLinks.forEach((link) => {
-      link.href = ACCOUNT_URL;
-      link.title = `Logged in as ${name}`;
-      link.dataset.authState = 'authenticated';
-
-      const text = link.textContent.trim();
-
-      if (text && !link.querySelector('svg') && !link.querySelector('i')) {
-        link.textContent = `Hi, ${name}`;
-      }
-
-      link.style.display = '';
-    });
-
-    logoutButtons.forEach((button) => {
-      button.style.display = 'inline-flex';
-    });
-
-    const navUserName = document.getElementById('nav-user-name');
-
-    if (navUserName) {
-      navUserName.textContent = `Hi, ${name}`;
-    }
-  }
-
-  function ensureAccountPanel(user) {
-    let panel = document.getElementById('account');
-
-    if (!panel) {
-      const hero = document.querySelector('.home-hero');
-      panel = document.createElement('section');
-      panel.id = 'account';
-      panel.className = 'section container';
-      panel.style.marginTop = '24px';
-
-      if (hero && hero.parentNode) {
-        hero.parentNode.insertBefore(panel, hero.nextSibling);
-      } else {
-        document.body.prepend(panel);
-      }
-    }
-
-    const name = displayNameOf(user);
-    const contact = user?.email || user?.phone || 'Not provided';
-    const role = user?.role || 'customer';
-
-    panel.innerHTML = `
-      <div class="card" style="padding: 20px;">
-        <h2 id="welcome-name">Welcome back, ${escapeHtml(name)}!</h2>
-        <p id="welcome-message">Ready for some sweet, freshly baked treats today?</p>
-        <p id="user-profile-email">${escapeHtml(contact)}</p>
-        <p id="user-profile-role">Role: ${escapeHtml(String(role).toUpperCase())}</p>
-        <button type="button" id="home-panel-logout" class="btn btn--secondary">
-          Logout
-        </button>
-      </div>
-    `;
-
-    document.getElementById('home-panel-logout')?.addEventListener('click', handleLogout);
-  }
-
-  function updateHomePublic() {
-    updateHeaderPublic();
-
-    const welcomeName = document.getElementById('welcome-name');
-    const welcomeMessage = document.getElementById('welcome-message');
-    const accountPanel = document.getElementById('account');
-
-    setText(welcomeName, 'Welcome to Bite Me Donut!');
-    setText(welcomeMessage, 'Discover our delicious selection of fresh donuts and treats.');
-
-    if (accountPanel) {
-      accountPanel.style.display = 'none';
-    }
-  }
-
-  function updateHomeLoggedIn(user) {
-    updateHeaderLoggedIn(user);
-    ensureAccountPanel(user);
-
-    const accountPanel = document.getElementById('account');
-
-    if (accountPanel) {
-      accountPanel.style.display = '';
-    }
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#039;');
   }
 
   async function loadCurrentUser() {
@@ -395,20 +346,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  async function handleLogout() {
-    try {
-      await postHome('logout');
-    } catch (error) {
-      console.warn('[home:logout]', error);
-    }
-
-    clearSession();
-    window.location.href = LOGIN_URL;
-  }
-
-  findLogoutButtons().forEach((button) => {
-    button.addEventListener('click', handleLogout);
-  });
-
+  bindLogoutButtons();
   await loadCurrentUser();
 });

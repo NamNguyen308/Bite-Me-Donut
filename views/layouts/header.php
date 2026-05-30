@@ -26,14 +26,12 @@ $profileUrl = $appBasePath . '/views/user/customer_profile.php';
 $cartUrl = $appBasePath . '/views/user/cart.php';
 $loginUrl = $appBasePath . '/views/auth/user-login.php';
 $logoUrl = $appBasePath . '/public/assets/img/logo.png';
+$rootCssUrl = $appBasePath . '/public/assets/css/root.css';
 ?>
-<link rel="stylesheet" href="../../public/assets/css/root.css">
+
+<link rel="stylesheet" href="<?= htmlspecialchars($rootCssUrl) ?>">
 
 <style>
-  /* -------------------------------------------------------
-     Header — fixed navbar, 6 ô bằng nhau trải full width
-     ------------------------------------------------------- */
-
   .site-header {
     position: fixed;
     top: 0;
@@ -45,7 +43,6 @@ $logoUrl = $appBasePath . '/public/assets/img/logo.png';
     height: var(--navbar-height);
   }
 
-  /* Grid 6 cột bằng nhau, full width */
   .site-header__inner {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
@@ -55,7 +52,6 @@ $logoUrl = $appBasePath . '/public/assets/img/logo.png';
     border-left: 1px solid var(--color-border);
   }
 
-  /* Style chung cho MỌI ô trong header */
   .site-header__cell {
     display: flex;
     align-items: center;
@@ -65,7 +61,6 @@ $logoUrl = $appBasePath . '/public/assets/img/logo.png';
     overflow: hidden;
   }
 
-  /* ------- Ô 1: Logo + Tên ------- */
   .site-header__logo {
     gap: var(--space-3);
     text-decoration: none;
@@ -93,7 +88,6 @@ $logoUrl = $appBasePath . '/public/assets/img/logo.png';
     white-space: nowrap;
   }
 
-  /* ------- Ô 2–5: Nav links ------- */
   .site-header__link {
     width: 100%;
     height: 100%;
@@ -120,9 +114,8 @@ $logoUrl = $appBasePath . '/public/assets/img/logo.png';
     color: var(--color-primary);
   }
 
-  /* ------- Ô 6: User + Cart icons trong 1 ô ------- */
   .site-header__actions {
-    gap: var(--space-6);
+    gap: var(--space-4);
     padding: 0 var(--space-4);
   }
 
@@ -152,7 +145,39 @@ $logoUrl = $appBasePath . '/public/assets/img/logo.png';
     display: block;
   }
 
-  /* Badge số giỏ hàng */
+  .site-header__account-link {
+    width: auto;
+    min-width: 42px;
+    min-height: 42px;
+    gap: 8px;
+    padding-inline: 12px;
+  }
+
+  .site-header__account-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .site-header__account-label {
+    display: none;
+    white-space: nowrap;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: var(--font-weight-black);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .site-header__account-link[data-auth-state="authenticated"] .site-header__account-icon {
+    display: none;
+  }
+
+  .site-header__account-link[data-auth-state="authenticated"] .site-header__account-label {
+    display: inline-flex;
+  }
+
   .site-header__cart-badge {
     position: absolute;
     top: -2px;
@@ -172,36 +197,50 @@ $logoUrl = $appBasePath . '/public/assets/img/logo.png';
     pointer-events: none;
   }
 
-  /* ------- Offset nội dung trang (vì header fixed) ------- */
   .header-offset {
     height: var(--navbar-height);
   }
 
-  /* ------- Responsive ------- */
   @media (max-width: 768px) {
     .site-header__link {
       font-size: var(--text-xs);
       letter-spacing: 0.04em;
     }
+
     .site-header__brand-name {
       font-size: var(--text-sm);
     }
+
     .site-header__logo img {
       width: 32px;
       height: 32px;
     }
+
     .site-header__actions {
-      gap: var(--space-3);
+      gap: var(--space-2);
+      padding: 0 var(--space-2);
+    }
+
+    .site-header__account-label {
+      font-size: 10px;
+      letter-spacing: 0.04em;
     }
   }
 
   @media (max-width: 520px) {
     .site-header__inner {
-      grid-template-columns: 2fr repeat(4, 1fr) 1.2fr;
+      grid-template-columns: 2fr repeat(4, 1fr) 1.5fr;
     }
+
     .site-header__link {
       font-size: 9px;
       letter-spacing: 0;
+    }
+
+    .site-header__account-label {
+      max-width: 82px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 </style>
@@ -209,142 +248,206 @@ $logoUrl = $appBasePath . '/public/assets/img/logo.png';
 <header class="site-header" role="banner">
   <div class="site-header__inner">
 
-    <!-- Ô 1: Logo + Tên -->
     <a href="<?= htmlspecialchars($homeUrl) ?>"
-   class="site-header__cell site-header__logo"
-   aria-label="Bite Me Donut — Trang chủ">
-  <img
-    src="<?= htmlspecialchars($logoUrl) ?>"
-    alt="Logo Bite Me Donut"
-    width="40"
-    height="40"
-  >
-  <span class="site-header__brand-name">Bite Me<br>Donut</span>
-</a>
+       class="site-header__cell site-header__logo"
+       aria-label="Bite Me Donut — Trang chủ">
+      <img
+        src="<?= htmlspecialchars($logoUrl) ?>"
+        alt="Logo Bite Me Donut"
+        width="40"
+        height="40"
+      >
+      <span class="site-header__brand-name">Bite Me<br>Donut</span>
+    </a>
 
-<div class="site-header__cell">
-  <a href="<?= htmlspecialchars($homeUrl) ?>"
-     class="site-header__link <?= $activePage === 'home' ? 'is-active' : '' ?>">
-    Home
-  </a>
-</div>
+    <div class="site-header__cell">
+      <a href="<?= htmlspecialchars($homeUrl) ?>"
+         class="site-header__link <?= $activePage === 'home' ? 'is-active' : '' ?>">
+        Home
+      </a>
+    </div>
 
-<div class="site-header__cell">
-  <a href="<?= htmlspecialchars($productsUrl) ?>"
-     class="site-header__link <?= $activePage === 'products' ? 'is-active' : '' ?>">
-    Products
-  </a>
-</div>
+    <div class="site-header__cell">
+      <a href="<?= htmlspecialchars($productsUrl) ?>"
+         class="site-header__link <?= $activePage === 'products' ? 'is-active' : '' ?>">
+        Products
+      </a>
+    </div>
 
-<div class="site-header__cell">
-  <a href="<?= htmlspecialchars($contactUrl) ?>"
-     class="site-header__link <?= $activePage === 'contact' ? 'is-active' : '' ?>">
-    Contact
-  </a>
-</div>
+    <div class="site-header__cell">
+      <a href="<?= htmlspecialchars($contactUrl) ?>"
+         class="site-header__link <?= $activePage === 'contact' ? 'is-active' : '' ?>">
+        Contact
+      </a>
+    </div>
 
-<div class="site-header__cell">
-  <a href="<?= htmlspecialchars($policiesUrl) ?>"
-     class="site-header__link <?= $activePage === 'policies' ? 'is-active' : '' ?>">
-    Policies
-  </a>
-</div>
+    <div class="site-header__cell">
+      <a href="<?= htmlspecialchars($policiesUrl) ?>"
+         class="site-header__link <?= $activePage === 'policies' ? 'is-active' : '' ?>">
+        Policies
+      </a>
+    </div>
 
     <div class="site-header__cell site-header__actions">
+      <a
+        id="nav-account-link"
+        href="<?= htmlspecialchars($loginUrl) ?>"
+        data-login-url="<?= htmlspecialchars($loginUrl) ?>"
+        data-profile-url="<?= htmlspecialchars($profileUrl) ?>"
+        class="site-header__icon-btn site-header__account-link"
+        aria-label="Tài khoản"
+        title="Đăng nhập"
+        data-auth-state="guest"
+      >
+        <span class="site-header__account-icon" id="nav-account-icon">
+          <svg xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="1.8"
+               stroke-linecap="round"
+               stroke-linejoin="round"
+               aria-hidden="true">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+        </span>
 
-  <a
-    id="nav-account-link"
-    href="<?= htmlspecialchars($loginUrl) ?>"
-    data-login-url="<?= htmlspecialchars($loginUrl) ?>"
-    data-profile-url="<?= htmlspecialchars($profileUrl) ?>"
-    class="site-header__icon-btn"
-    aria-label="Tài khoản"
-    title="Đăng nhập"
-  >
-    <svg xmlns="http://www.w3.org/2000/svg"
-         viewBox="0 0 24 24"
-         fill="none"
-         stroke="currentColor"
-         stroke-width="1.8"
-         stroke-linecap="round"
-         stroke-linejoin="round"
-         aria-hidden="true">
-      <circle cx="12" cy="8" r="4"/>
-      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-    </svg>
-  </a>
+        <span class="site-header__account-label" id="nav-account-label"></span>
+      </a>
 
-  <a
-    id="nav-cart-link"
-    href="<?= htmlspecialchars($loginUrl) ?>"
-    data-login-url="<?= htmlspecialchars($loginUrl) ?>"
-    data-cart-url="<?= htmlspecialchars($cartUrl) ?>"
-    class="site-header__icon-btn"
-    aria-label="Giỏ hàng"
-    title="Giỏ hàng"
-  >
-    <svg xmlns="http://www.w3.org/2000/svg"
-         viewBox="0 0 24 24"
-         fill="none"
-         stroke="currentColor"
-         stroke-width="1.8"
-         stroke-linecap="round"
-         stroke-linejoin="round"
-         aria-hidden="true">
-      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-      <line x1="3" y1="6" x2="21" y2="6"/>
-      <path d="M16 10a4 4 0 0 1-8 0"/>
-    </svg>
+      <a
+        id="nav-cart-link"
+        href="<?= htmlspecialchars($loginUrl) ?>"
+        data-login-url="<?= htmlspecialchars($loginUrl) ?>"
+        data-cart-url="<?= htmlspecialchars($cartUrl) ?>"
+        class="site-header__icon-btn"
+        aria-label="Giỏ hàng"
+        title="Giỏ hàng"
+        data-auth-state="guest"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="1.8"
+             stroke-linecap="round"
+             stroke-linejoin="round"
+             aria-hidden="true">
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
 
-    <?php if (!empty($cartCount) && $cartCount > 0): ?>
-      <span class="site-header__cart-badge"
-            aria-label="<?= (int)$cartCount ?> sản phẩm trong giỏ">
-        <?= min((int)$cartCount, 99) ?>
-      </span>
-    <?php endif; ?>
-  </a>
+        <?php if (!empty($cartCount) && $cartCount > 0): ?>
+          <span class="site-header__cart-badge"
+                aria-label="<?= (int)$cartCount ?> sản phẩm trong giỏ">
+            <?= min((int)$cartCount, 99) ?>
+          </span>
+        <?php endif; ?>
+      </a>
+    </div>
 
-</div>
+  </div>
 </header>
 
-<!-- Đẩy nội dung xuống đúng chiều cao header fixed -->
 <div class="header-offset" aria-hidden="true"></div>
 
 <script>
 (function () {
-  const token =
-    localStorage.getItem('access_token') ||
-    localStorage.getItem('auth_token');
+  function getToken() {
+    return localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+  }
 
-  const accountLink = document.getElementById('nav-account-link');
-  const cartLink = document.getElementById('nav-cart-link');
+  function getCachedUser() {
+    const keys = ['auth_user', 'current_user', 'user'];
 
-  if (accountLink) {
-    const loginUrl = accountLink.dataset.loginUrl;
-    const profileUrl = accountLink.dataset.profileUrl;
+    for (const key of keys) {
+      const raw = localStorage.getItem(key);
 
-    if (token) {
-      accountLink.href = profileUrl;
-      accountLink.title = 'Tài khoản của tôi';
-      accountLink.dataset.authState = 'authenticated';
-    } else {
-      accountLink.href = loginUrl;
-      accountLink.title = 'Đăng nhập';
-      accountLink.dataset.authState = 'guest';
+      if (!raw) continue;
+
+      try {
+        const user = JSON.parse(raw);
+
+        if (user && typeof user === 'object') {
+          return user;
+        }
+      } catch (error) {}
+    }
+
+    return null;
+  }
+
+  function getShortName(user) {
+    const value = String(
+      user?.name ||
+      user?.full_name ||
+      user?.email ||
+      user?.phone ||
+      ''
+    ).trim();
+
+    if (!value) {
+      return 'Bạn';
+    }
+
+    if (value.includes('@')) {
+      return value.split('@')[0];
+    }
+
+    const parts = value.split(/\s+/);
+
+    return parts[parts.length - 1] || value;
+  }
+
+  function updateHeaderAuth(user) {
+    const token = getToken();
+    const accountLink = document.getElementById('nav-account-link');
+    const accountLabel = document.getElementById('nav-account-label');
+    const cartLink = document.getElementById('nav-cart-link');
+
+    if (accountLink) {
+      const loginUrl = accountLink.dataset.loginUrl;
+      const profileUrl = accountLink.dataset.profileUrl;
+
+      if (token) {
+        const shortName = getShortName(user || getCachedUser());
+
+        accountLink.href = profileUrl;
+        accountLink.title = 'Tài khoản của tôi';
+        accountLink.dataset.authState = 'authenticated';
+
+        if (accountLabel) {
+          accountLabel.textContent = 'Xin chào ' + shortName;
+        }
+      } else {
+        accountLink.href = loginUrl;
+        accountLink.title = 'Đăng nhập';
+        accountLink.dataset.authState = 'guest';
+
+        if (accountLabel) {
+          accountLabel.textContent = '';
+        }
+      }
+    }
+
+    if (cartLink) {
+      const loginUrl = cartLink.dataset.loginUrl;
+      const cartUrl = cartLink.dataset.cartUrl;
+
+      if (token) {
+        cartLink.href = cartUrl;
+        cartLink.dataset.authState = 'authenticated';
+      } else {
+        cartLink.href = loginUrl;
+        cartLink.dataset.authState = 'guest';
+      }
     }
   }
 
-  if (cartLink) {
-    const loginUrl = cartLink.dataset.loginUrl;
-    const cartUrl = cartLink.dataset.cartUrl;
+  window.updateGlobalHeaderAuth = updateHeaderAuth;
 
-    if (token) {
-      cartLink.href = cartUrl;
-      cartLink.dataset.authState = 'authenticated';
-    } else {
-      cartLink.href = loginUrl;
-      cartLink.dataset.authState = 'guest';
-    }
-  }
+  updateHeaderAuth(getCachedUser());
 })();
 </script>

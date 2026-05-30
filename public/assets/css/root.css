@@ -1346,3 +1346,28 @@ h6,
     padding: var(--space-3) var(--space-6);
   }
 }
+
+.site-header__account-link {
+  width: auto;
+  min-width: 42px;
+  gap: 8px;
+  padding-inline: 14px;
+  text-decoration: none;
+}
+
+.site-header__account-label {
+  display: none;
+  white-space: nowrap;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.site-header__account-link[data-auth-state="authenticated"] .site-header__account-icon {
+  display: none;
+}
+
+.site-header__account-link[data-auth-state="authenticated"] .site-header__account-label {
+  display: inline-flex;
+}
